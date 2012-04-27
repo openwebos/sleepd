@@ -1,0 +1,45 @@
+# @@@LICENSE
+#
+#      Copyright (c) 2011-2012 Hewlett-Packard Development Company, L.P.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# LICENSE@@@
+
+
+# -*- mode: conf; -*-
+# sleepd
+
+start on stopped finish
+
+# Stop when the Software Update tool is about to install an update.  The tool
+# uses upstart to restart jobs when the installation is complete.
+stop on started start_update
+
+respawn
+
+pre-start script
+    CONF_DIR="/var/preferences/com.palm.sleep"
+    CONF_FILE="${CONF_DIR}/sleepd.conf"
+    DEFAULT_CONF_FILE="/etc/default/sleepd.conf"
+    TMP_FILE="${CONF_DIR}/sleepd.tmp"
+    if [ ! -f ${CONF_FILE} ]; then
+        mkdir -p ${CONF_DIR} || true
+        cp ${DEFAULT_CONF_FILE} ${TMP_FILE} || true
+        sync || true
+        mv ${TMP_FILE} ${CONF_FILE} || true
+    fi
+end script
+    
+service
+exec /usr/sbin/sleepd
