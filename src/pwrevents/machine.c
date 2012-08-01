@@ -16,6 +16,16 @@
 *
 * LICENSE@@@ */
 
+/**
+* @file client.c
+*
+* @brief This file contains functions used to manage machines registered with sleepd. 
+* All the added clients account for the decision by the system to
+* suspend or not to suspend. If any client NACKS the suspend request, sleepd will not suspend
+* the system.
+*
+*/
+
 
 #include <unistd.h>
 #include <stdlib.h>
