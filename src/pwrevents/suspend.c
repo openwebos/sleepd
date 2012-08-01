@@ -317,7 +317,7 @@ IdleCheck(gpointer ctx)
         	g_free(app_id);
         	g_free(key);
         	int next_wake = expiry - rtc_wall_time();
-        	if(next_wake <= gSleepConfig.wait_alarms_s)
+        	if(next_wake >= 0 && next_wake <= gSleepConfig.wait_alarms_s)
         	{
         		SLEEPDLOG(LOG_DEBUG, "%s: Not going to sleep because an alarm is "
         				"about to fire in %d sec\n", __func__,next_wake);
@@ -727,6 +727,7 @@ StateSleep(void)
 
     if(MachineCanSleep()) {
     	// let the system sleep now.
+        _queue_next_timeout(false);
     	MachineSleep();
     }
     else {
@@ -754,6 +755,7 @@ StateAbortSuspend(void)
 
     return kPowerStateOn;
 }
+
 
 /**
  * @brief Broadcast the resume signal when we wake up ( due to kernel sleep or activity)

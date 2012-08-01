@@ -71,6 +71,8 @@ bool _timeout_clear(const char *app_id, const char *key, bool public_bus);
 
 bool _timeout_delete(const char *app_id, const char *key, bool public_bus);
 
+void _queue_next_timeout(bool set_callback_fn);
+
 bool timeout_get_next_wakeup(time_t *expiry, gchar **app_id, gchar **key);
 
 bool update_timeouts_on_resume(void);

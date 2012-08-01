@@ -525,7 +525,13 @@ timeout_get_next_wakeup(time_t *expiry, gchar ** app_id, gchar ** key)
 
 /** 
 * @brief Queues both a RTC alarm for wakeup timeouts
-*        and a timer for non-wakeup timeouts.
+*        and a timer for non-wakeup timeouts. 
+*
+* @param set_callback_fn 
+*  If set_callback_fn is set to true, the callback function _rtc_alarm_fired
+*  will be triggered as soon as the alarm is fired.  
+*  It will be set to true as long as device is awake, and will be set to false when 
+*  the device suspends.
 * 
 * The non-wakeup timeout timer is necessary so that
 * these timeouts do not wake the device when they fire.
@@ -533,8 +539,8 @@ timeout_get_next_wakeup(time_t *expiry, gchar ** app_id, gchar ** key)
 * Case 2: non-wakeup timeout expires when device is asleep.
 *     On resume, we will check to see if any alarms are expired and fire them.
 */
-static void
-_queue_next_timeout(void)
+void
+_queue_next_timeout(bool set_callback_fn)
 {
     g_debug(LOG_DOMAIN "%s ", __FUNCTION__);
 
@@ -564,7 +570,11 @@ _queue_next_timeout(void)
     }
     else {
         rtc_expiry = atol( table[ noCols ]);
-        nyx_system_set_alarm(GetNyxSystemDevice(),to_rtc(rtc_expiry),_rtc_alarm_fired,NULL);
+	if(set_callback_fn)
+	        nyx_system_set_alarm(GetNyxSystemDevice(),to_rtc(rtc_expiry),_rtc_alarm_fired,NULL);
+	else
+	        nyx_system_set_alarm(GetNyxSystemDevice(),to_rtc(rtc_expiry),NULL,NULL);
+
     }
     sqlite3_free_table( table );
 
@@ -611,7 +621,7 @@ _update_timeouts(void)
         update_alarms_delta(delta);
     }
     _expire_timeouts();
-    _queue_next_timeout();
+    _queue_next_timeout(true);
 }
 
 void _timeout_create(_AlarmTimeout *timeout,
@@ -1273,7 +1283,6 @@ _resume_callback(LSHandle *sh, LSMessage *message, void *ctx)
     _update_timeouts();
     return true;
 }
-
 
 static int
 _alarms_timeout_init(void)
