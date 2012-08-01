@@ -45,10 +45,6 @@
 
 static char *machineName = NULL;
 
-bool suspend_with_charger = false;
-bool visual_leds_suspend = false;
-int fasthalt=0;
-
 bool chargerIsConnected = false, usbconn = false, dockconn = false;
 
 /**
@@ -104,7 +100,7 @@ MachineCanSleep(void)
     bool suspend_action_present = (ret == 0);
 
     return suspend_action_present &&
-          (!chargerIsConnected || suspend_with_charger);
+          (!chargerIsConnected || gSleepConfig.suspend_with_charger);
 }
 
 const char *
@@ -208,7 +204,6 @@ bool ChargerStatus(LSHandle *sh,
                    LSMessage *message, void *user_data)
 {
 	struct json_object *object;
-
 	object = json_tokener_parse(LSMessageGetPayload(message));
     if (NULL == object) goto out;
 
