@@ -122,7 +122,7 @@ main(int argc, char **argv)
  	int ret = nyx_device_open(NYX_DEVICE_SYSTEM, "Main", &nyxSystem);
  	if(ret != NYX_ERROR_NONE)
  	{
- 		SLEEPDLOG(LOG_CRIT,"Powerd: Unable to open the nyx device system");
+ 		SLEEPDLOG(LOG_CRIT,"Sleepd: Unable to open the nyx device system");
  		abort();
  	}
 
