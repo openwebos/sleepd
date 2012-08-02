@@ -235,8 +235,11 @@ static bool
 IsDisplayOn(void)
 {
 	nyx_led_controller_state_t state = NYX_LED_CONTROLLER_STATE_UNKNOWN;
-    nyx_led_controller_get_state(nyxDev,NYX_LED_CONTROLLER_LCD, &state);
-    return (state == NYX_LED_CONTROLLER_STATE_ON);
+	if(nyxDev)	
+    		nyx_led_controller_get_state(nyxDev,NYX_LED_CONTROLLER_LCD, &state);
+	else
+		state = NYX_LED_CONTROLLER_STATE_ON;
+	return (state == NYX_LED_CONTROLLER_STATE_ON);
 }
 
 /**
@@ -245,13 +248,16 @@ IsDisplayOn(void)
 void
 switchoffDisplay(void)
 {
-	nyx_led_controller_effect_t effect;
-    effect.required.effect = NYX_LED_CONTROLLER_EFFECT_LED_SET;
-    effect.required.led = NYX_LED_CONTROLLER_LCD;
-    effect.backlight.callback = NULL;
-    effect.backlight.brightness_lcd = -1;
-    nyx_led_controller_execute_effect(nyxDev, effect);
-    return;
+	if(nyxDev)
+	{
+		nyx_led_controller_effect_t effect;
+		effect.required.effect = NYX_LED_CONTROLLER_EFFECT_LED_SET;
+		effect.required.led = NYX_LED_CONTROLLER_LCD;
+		effect.backlight.callback = NULL;
+		effect.backlight.brightness_lcd = -1;
+		nyx_led_controller_execute_effect(nyxDev, effect);
+	}
+    	return;
 }
 
 
@@ -856,8 +862,7 @@ SuspendInit(void)
 	int ret = nyx_device_open(NYX_DEVICE_LED_CONTROLLER, "Default", &nyxDev);
 	if(ret != NYX_ERROR_NONE)
 	{
-		SLEEPDLOG(LOG_CRIT,"Powerd: Unable to open the nyx device led controller");
-		abort();
+		SLEEPDLOG(LOG_CRIT,"Sleepd: Unable to open the nyx device led controller");
 	}
 
     return 0;
