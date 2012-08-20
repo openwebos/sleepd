@@ -1,6 +1,6 @@
 {
     "role": {
-        "exeName":"/usr/sbin/sleepd",
+        "exeName":"@WEBOS_INSTALL_SBINDIR@/sleepd",
         "type": "privileged",
         "allowedNames": ["com.palm.sleep"]
     },

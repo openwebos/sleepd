@@ -61,7 +61,7 @@ SleepConfiguration gSleepConfig =
     .is_running = 1,
     .debug = 0,
 
-    .preference_dir = "/var/preferences/com.palm.sleep",
+    .preference_dir = "@WEBOS_INSTALL_LOCALSTATEDIR@/preferences/com.palm.sleep",
             
     .fasthalt = false
 };

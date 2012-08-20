@@ -1,6 +1,12 @@
 sleepd
 ======
 
+Summary
+-------
+Open webOS component to manage device suspend-resume cycles.
+
+Description
+-----------
 Sleepd is one of the important daemons started when webOS boots. It is responsible for scheduling platform sleeps as soon as it is idle, so that we see optimum battery performance. To achieve this it keeps polling on the system to see if any of the other services or processes need the platform running, and if not it sends the suspend message to all these components (so that they can finish whatever they are doing ASAP and suspend). Sleepd then lets the kernel know that the platform is ready to sleep. Once an interrupt (such as key press) has woken the platform up, sleepd lets the entire system know that the platform is up and running so that all the activities can resume. 
 
 Sleepd also manages the RTC alarms on the system by maintaining a SQlite database for all the requested alarms.
@@ -12,22 +18,22 @@ How to Build on Linux
 
 Below are the tools and libraries (and their minimum versions) required to build sleepd:
 
-* cmake 2.6
-* gcc 4.3
-* glib-2.0 2.16.6
+* cmake (version required by openwebos/cmake-modules-webos)
+* gcc 4.6.3
+* glib-2.0 2.32.1
 * libxml2 2.7.2
 * make (any version)
 * openwebos/cjson 1.8.0
 * openwebos/luna-service2 3.0.0
 * openwebos/nyx-lib 2.0.0 RC 2
 * openwebos/powerd 4.0.0
-* pkg-config 0.22
+* pkg-config 0.26
 * sqlite3 3.6.20
-
 
 ## Building
 
-Once you have downloaded the source, execute the following to build it:
+Once you have downloaded the source, enter the following to build it (after
+changing into the directory under which it was downloaded):
 
     $ mkdir BUILD
     $ cd BUILD
@@ -35,48 +41,38 @@ Once you have downloaded the source, execute the following to build it:
     $ make
     $ sudo make install
 
-The daemon and utility script will be installed under
+The directory under which the files are installed defaults to `/usr/local/webos`.
+You can install them elsewhere by supplying a value for `WEBOS_INSTALL_ROOT`
+when invoking `cmake`. For example:
 
-    /usr/local/sbin
-
-the default preferences file under
-
-    /usr/local/etc/default
-
-and the upstart script under
-
-    /usr/local/etc/event.d
-
-You can install it elsewhere by supplying a value for _CMAKE\_INSTALL\_PREFIX_ when invoking _cmake_. For example:
-
-    $ cmake -D CMAKE_INSTALL_PREFIX:STRING=$HOME/projects/openwebos ..
+    $ cmake -D WEBOS_INSTALL_ROOT:PATH=$HOME/projects/openwebos ..
     $ make
     $ make install
-    
-will install the files in subdirectories of $HOME/projects/openwebos instead of subdirectories of /usr/local. 
 
-Specifying _CMAKE\_INSTALL\_PREFIX_ also causes the pkg-config files under it to be used to find headers and libraries. To have _pkg-config_ look in a different tree, set the environment variable PKG_CONFIG_PATH to the path to its _lib/pkgconfig_ subdirectory.
+will install the files in subdirectories of `$HOME/projects/openwebos`.
+
+Specifying `WEBOS_INSTALL_ROOT` also causes `pkg-config` to look in that tree
+first before searching the standard locations. You can specify additional
+directories to be searched prior to this one by setting the `PKG_CONFIG_PATH`
+environment variable.
+
+If not specified, `WEBOS_INSTALL_ROOT` defaults to `/usr/local/webos`.
+
+To configure for a debug build, enter:
+
+    $ cmake -D CMAKE_BUILD_TYPE:STRING=Debug ..
+
+To see a list of the make targets that `cmake` has generated, enter:
+
+    $ make help
 
 ## Uninstalling
 
-From the directory where you originally ran _make install_, invoke:
+From the directory where you originally ran `make install`, enter:
 
-    $ sudo xargs rm < install_manifest.txt
+ $ [sudo] make uninstall
 
-## Generating documentation
-
-The tools required to generate the documentation are:
-
-* doxygen 1.6.3
-* graphviz 2.20.2
-
-Once you have run _cmake_, execute the following to generate the documentation:
-
-    $ make docs
-
-To view the generated HTML documentation, point your browser to
-
-    doc/html/index.html
+You will need to use `sudo` if you did not specify `WEBOS_INSTALL_ROOT`.
 
 # Copyright and License Information
 

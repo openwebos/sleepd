@@ -20,5 +20,5 @@
 
 [D-BUS Service]
 Name=com.palm.sleep
-Exec=/usr/sbin/sleepd
+Exec=@WEBOS_INSTALL_SBINDIR@/sleepd
 Type=static
