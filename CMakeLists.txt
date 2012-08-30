@@ -141,7 +141,9 @@ target_link_libraries(sleepd
                         ${LUNASERVICE2_LDFLAGS}
                         ${CJSON_LDFLAGS}
                         ${POWERD_LDFLAGS}
-                        ${NYXLIB_LDFLAGS})
+                        ${NYXLIB_LDFLAGS}
+                        rt
+                        pthread)
 
 
 install(TARGETS sleepd DESTINATION "sbin")
