@@ -16,6 +16,13 @@
 *
 * LICENSE@@@ */
 
+/**
+* @file machine.c
+*
+* @brief This file contains functions used to manage machines registered with sleepd. 
+*
+*/
+
 
 #include <unistd.h>
 #include <stdlib.h>
