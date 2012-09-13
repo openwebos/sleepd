@@ -55,7 +55,7 @@ pkg_check_modules(NYXLIB REQUIRED nyx)
 include_directories(${NYXLIB_INCLUDE_DIRS})
 webos_add_compiler_flags(ALL ${NYXLIB_CFLAGS})
 
-pkg_check_modules(POWERD REQUIRED libpowerd)
+pkg_check_modules(POWERD REQUIRED powerd)
 include_directories(${POWERD_INCLUDE_DIRS})
 webos_add_compiler_flags(ALL ${POWERD_CFLAGS})
 
