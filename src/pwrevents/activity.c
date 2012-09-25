@@ -30,7 +30,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <pthread.h>
-#include <lunaservice.h>
+#include <luna-service2/lunaservice.h>
 
 #include "suspend.h"
 #include "main.h"

@@ -17,10 +17,10 @@
 * LICENSE@@@ */
 
 
-#ifndef __LUNASERVICE_H__
-#define __LUNASERVICE_H__
+#ifndef __LUNASERVICE_UTILS_H__
+#define __LUNASERVICE_UTILS_H__
 
-#include <lunaservice.h>
+#include <luna-service2/lunaservice.h>
 
 void LSMessageReplyErrorUnknown(LSHandle *sh, LSMessage *message);
 void LSMessageReplyErrorInvalidParams(LSHandle *sh, LSMessage *message);

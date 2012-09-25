@@ -25,13 +25,13 @@
 */
 
 
-#include <lunaservice.h>
 #include <glib.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
 #include <cjson/json.h>
 #include <sys/stat.h>
+#include <luna-service2/lunaservice.h>
 
 #include "main.h"
 #include "logging.h"

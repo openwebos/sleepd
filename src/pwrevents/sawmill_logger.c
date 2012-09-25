@@ -29,9 +29,9 @@
 #include <string.h>
 #include <unistd.h>
 #include <pthread.h>
-#include <lunaservice.h>
 #include <time.h>
 #include <stdlib.h>
+#include <luna-service2/lunaservice.h>
 
 #include "init.h"
 #include "sysfs.h"

@@ -30,7 +30,7 @@
 #include <sys/stat.h>
 #include <sys/utsname.h>
 #include <cjson/json.h>
-#include <lunaservice.h>
+#include <luna-service2/lunaservice.h>
 
 #include "main.h"
 #include "suspend.h"

@@ -26,7 +26,7 @@
 #include <getopt.h>
 #include <stdlib.h>
 #include <cjson/json.h>
-#include <lunaservice.h>
+#include <luna-service2/lunaservice.h>
 
 #include "init.h"
 #include "logging.h"

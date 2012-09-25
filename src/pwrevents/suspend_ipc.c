@@ -24,15 +24,9 @@
  *
  */
 
-
-#include <lunaservice.h>
-
-#ifdef USE_DBUS
-#include <lunaservice-dbus.h>
-#endif
-
 #include <syslog.h>
 #include <cjson/json.h>
+#include <luna-service2/lunaservice.h>
 
 #include "wait.h"
 #include "init.h"

@@ -55,7 +55,7 @@
 #include "nyx/nyx_client.h"
 
 #include <cjson/json.h>
-#include <lunaservice.h>
+#include <luna-service2/lunaservice.h>
 
 #define LOG_DOMAIN "PWREVENT-SUSPEND: "
 

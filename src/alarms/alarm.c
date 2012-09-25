@@ -28,7 +28,7 @@
 #include <stdbool.h>
 #include <time.h>
 #include <string.h>
-#include <lunaservice.h>
+#include <luna-service2/lunaservice.h>
 
 #include <cjson/json.h>
 

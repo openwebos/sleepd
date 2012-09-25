@@ -28,7 +28,7 @@
 #include <stdbool.h>
 #include <string.h>
 
-#include <lunaservice.h>
+#include <luna-service2/lunaservice.h>
 
 #include "logging.h"
 
