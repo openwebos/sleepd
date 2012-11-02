@@ -25,7 +25,7 @@ Below are the tools and libraries (and their minimum versions) required to build
 * make (any version)
 * openwebos/cjson 1.8.0
 * openwebos/luna-service2 3.0.0
-* openwebos/nyx-lib 2.0.0 RC 2
+* openwebos/nyx-lib 3.0.0 RC 1
 * openwebos/powerd 4.0.0
 * pkg-config 0.26
 * sqlite3 3.6.20

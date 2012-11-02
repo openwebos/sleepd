@@ -27,7 +27,7 @@ project(sleepd C)
 
 include(webOS/webOS)
 webos_modules_init(1 0 0 QUALIFIER RC2)
-webos_component(1 1 0)
+webos_component(1 1 1)
 
 include(FindPkgConfig)
 

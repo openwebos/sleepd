@@ -159,9 +159,9 @@ MachineForceReboot(const char *reason)
     write_console("Pwrevents rebooting system because of %s\n", reason);
 
     if(gSleepConfig.fasthalt)
-    	nyx_system_reboot(GetNyxSystemDevice(),NYX_SYSTEM_EMERG_SHUTDOWN);
+    	nyx_system_reboot(GetNyxSystemDevice(),NYX_SYSTEM_EMERG_SHUTDOWN, reason);
     else
-    	nyx_system_reboot(GetNyxSystemDevice(),NYX_SYSTEM_NORMAL_SHUTDOWN);
+    	nyx_system_reboot(GetNyxSystemDevice(),NYX_SYSTEM_NORMAL_SHUTDOWN, reason);
 }
 
 
