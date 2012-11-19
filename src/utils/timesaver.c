@@ -27,6 +27,7 @@
 #include <fcntl.h>
 #include <string.h>
 
+#include "config.h"
 #include "logging.h"
 #include "main.h"
 
@@ -49,9 +50,9 @@ timesaver_save()
 	if (!time_db)
     {
 		time_db = g_build_filename(
-				PREFERENCE_DIR, "time_saver", NULL);
+				gSleepConfig.preference_dir, "time_saver", NULL);
 		time_db_tmp = g_build_filename(
-				PREFERENCE_DIR, "time_saver.tmp", NULL);
+				gSleepConfig.preference_dir, "time_saver.tmp", NULL);
     }
 
     if (NULL == time_db)

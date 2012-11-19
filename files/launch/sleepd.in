@@ -27,19 +27,6 @@ start on stopped finish
 stop on started start_update
 
 respawn
-
-pre-start script
-    CONF_DIR="@WEBOS_INSTALL_LOCALSTATEDIR@/preferences/com.palm.sleep"
-    CONF_FILE="${CONF_DIR}/sleepd.conf"
-    DEFAULT_CONF_FILE="@WEBOS_INSTALL_DEFAULTCONFDIR@/sleepd.conf"
-    TMP_FILE="${CONF_DIR}/sleepd.tmp"
-    if [ ! -f ${CONF_FILE} ]; then
-        mkdir -p ${CONF_DIR} || true
-        cp ${DEFAULT_CONF_FILE} ${TMP_FILE} || true
-        sync || true
-        mv ${TMP_FILE} ${CONF_FILE} || true
-    fi
-end script
     
 service
 exec @WEBOS_INSTALL_SBINDIR@/sleepd

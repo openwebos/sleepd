@@ -67,11 +67,10 @@
 
 #define STD_ASCTIME_BUF_SIZE	26
 
-// FIXME: database path should be based on gPowerConfig.preference_dir
-#define TIMEOUT_DATABASE_NAME "/var/preferences/com.palm.sleep/SysTimeouts.db"
-
 // This allows testing the SQL commands to add the new columns. Set to false for production code
 #define CREATE_DB_WITHOUT_ACTIVITY_COLUMNS 0
+
+#define TIMEOUT_DATABASE_NAME "SysTimeouts.db"
 
 typedef enum {
     AlarmTimeoutRelative,
@@ -82,7 +81,6 @@ static LSPalmService *psh = NULL;
 static sqlite3 *timeout_db = NULL;
 static GTimerSource *sTimerCheck = NULL;
 
-static const char* kSysTimeoutDatabaseName = TIMEOUT_DATABASE_NAME;
 /*
    Database Schema.
 
@@ -1289,28 +1287,26 @@ _alarms_timeout_init(void)
 {
     bool retVal;
 
+    gchar* timeout_db_name = g_build_filename(gSleepConfig.preference_dir, TIMEOUT_DATABASE_NAME, NULL);
+
     if (gSleepConfig.disable_rtc_alarms)
 	{
 		SLEEPDLOG(LOG_INFO, "%s: RTC alarms disabled", __FUNCTION__);
 		return 0;
 	}
 
-    /* Set up database */
-    const char* ptr = strrchr( kSysTimeoutDatabaseName, '/' );
-    gchar* filename = g_filename_from_utf8( kSysTimeoutDatabaseName, ptr-kSysTimeoutDatabaseName, 0, 0, 0);
-    if (!filename) {
-        goto error;
-    }
+    gchar* timeout_db_path = g_path_get_dirname(timeout_db_name);
+    g_mkdir_with_parents(timeout_db_path, S_IRWXU);
+    g_free(timeout_db_path);
 
-    g_mkdir_with_parents(filename, S_IRWXU);
-    g_free(filename);
-
-    retVal = smart_sql_open( kSysTimeoutDatabaseName, &timeout_db );
+    retVal = smart_sql_open( timeout_db_name, &timeout_db );
     if( !retVal ) {
         SLEEPDLOG(LOG_ERR,"Failed to open database %s\n",
-                kSysTimeoutDatabaseName );
+                timeout_db_name );
         goto error;
     }
+
+    g_free(timeout_db_name);
 
     retVal = smart_sql_exec( timeout_db, kSysTimeoutDatabaseCreateSchema );
     if( !retVal ) {

@@ -40,6 +40,7 @@
 
 #include "main.h"
 #include "logging.h"
+#include "config.h"
 #include "timeout_alarm.h"
 
 #define LOG_DOMAIN "ALARM: "
@@ -681,7 +682,7 @@ alarm_queue_create(void)
     gAlarmQueue->seq_id = 0;
 
     gAlarmQueue->alarm_db =
-        g_build_filename(PREFERENCE_DIR, "alarms.xml", NULL);
+        g_build_filename(gSleepConfig.preference_dir, "alarms.xml", NULL);
 
     return 0;
 }

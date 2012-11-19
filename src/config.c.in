@@ -111,8 +111,9 @@ config_init(void)
         return -1;
     }
 
+// Load default values from configuration file
     char *config_path =
-        g_build_filename(gSleepConfig.preference_dir, "sleepd.conf", NULL);
+        g_build_filename("@WEBOS_INSTALL_DEFAULTCONFDIR@", "sleepd.conf", NULL);
     retVal = g_key_file_load_from_file(config_file, config_path,
         G_KEY_FILE_NONE, NULL);
     if (!retVal)
