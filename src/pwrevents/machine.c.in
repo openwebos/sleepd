@@ -88,6 +88,7 @@ MachineGetName(void)
 
     machineName = g_strdup(machine_id);
     return machineName;
+
 unknown:
     machineName = "unknown";
     return machineName;
@@ -122,22 +123,20 @@ MachineCantSleepReason(void)
 
 void MachineSleep(void)
 {
-	bool success;
-	switchoffDisplay();
+    bool success;
+    switchoffDisplay();
 
-	if (gSleepConfig.visual_leds_suspend)
-	{
-		SysfsWriteString(
-			"/sys/class/leds/core_navi_center/brightness", "0");
-	}
+    if (gSleepConfig.visual_leds_suspend)
+    {
+        SysfsWriteString("/sys/class/leds/core_navi_center/brightness", "0");
+    }
 
-	nyx_system_suspend(GetNyxSystemDevice(),&success);
+    nyx_system_suspend(GetNyxSystemDevice(),&success);
 
-	if (gSleepConfig.visual_leds_suspend)
-	{
-		SysfsWriteString(
-			"/sys/class/leds/core_navi_center/brightness", "15");
-	}
+    if (gSleepConfig.visual_leds_suspend)
+    {
+        SysfsWriteString("/sys/class/leds/core_navi_center/brightness", "15");
+    }
 }
 
 void
@@ -146,10 +145,17 @@ MachineForceShutdown(const char *reason)
     g_critical("Pwrevents shutting down system because of %s\n", reason);
     write_console("Pwrevents shutting down system because of %s\n", reason);
 
+#ifdef REBOOT_TAKES_REASON
     if(gSleepConfig.fasthalt)
-    	nyx_system_shutdown(GetNyxSystemDevice(),NYX_SYSTEM_EMERG_SHUTDOWN);
+        nyx_system_shutdown(GetNyxSystemDevice(),NYX_SYSTEM_EMERG_SHUTDOWN, reason);
     else
-    	nyx_system_shutdown(GetNyxSystemDevice(),NYX_SYSTEM_NORMAL_SHUTDOWN);
+        nyx_system_shutdown(GetNyxSystemDevice(),NYX_SYSTEM_NORMAL_SHUTDOWN, reason);
+#else
+    if(gSleepConfig.fasthalt)
+        nyx_system_shutdown(GetNyxSystemDevice(),NYX_SYSTEM_EMERG_SHUTDOWN);
+    else
+        nyx_system_shutdown(GetNyxSystemDevice(),NYX_SYSTEM_NORMAL_SHUTDOWN);
+#endif
 }
 
 void
@@ -158,10 +164,17 @@ MachineForceReboot(const char *reason)
     g_critical("Pwrevents rebooting system because of %s\n", reason);
     write_console("Pwrevents rebooting system because of %s\n", reason);
 
+#ifdef REBOOT_TAKES_REASON
     if(gSleepConfig.fasthalt)
-    	nyx_system_reboot(GetNyxSystemDevice(),NYX_SYSTEM_EMERG_SHUTDOWN, reason);
+        nyx_system_reboot(GetNyxSystemDevice(),NYX_SYSTEM_EMERG_SHUTDOWN, reason);
     else
-    	nyx_system_reboot(GetNyxSystemDevice(),NYX_SYSTEM_NORMAL_SHUTDOWN, reason);
+        nyx_system_reboot(GetNyxSystemDevice(),NYX_SYSTEM_NORMAL_SHUTDOWN, reason);
+#else
+    if(gSleepConfig.fasthalt)
+        nyx_system_reboot(GetNyxSystemDevice(),NYX_SYSTEM_EMERG_SHUTDOWN);
+    else
+        nyx_system_reboot(GetNyxSystemDevice(),NYX_SYSTEM_NORMAL_SHUTDOWN);
+#endif
 }
 
 
@@ -203,16 +216,18 @@ MachineGetToken(const char *token_name, char *buf, int len)
 bool ChargerStatus(LSHandle *sh,
                    LSMessage *message, void *user_data)
 {
-	struct json_object *object;
-	object = json_tokener_parse(LSMessageGetPayload(message));
+    struct json_object *object;
+    object = json_tokener_parse(LSMessageGetPayload(message));
+
     if (NULL == object) goto out;
 
     if(json_object_object_get(object, "Charging")) {
-    	usbconn = json_object_get_boolean(json_object_object_get(object, "USBConnected"));
-    	dockconn = json_object_get_boolean(json_object_object_get(object, "DockPower"));
-    	g_debug("Charger connected/disconnected, usb : %s, dock : %s",usbconn?"true":"false",dockconn?"true":"false");
+        usbconn = json_object_get_boolean(json_object_object_get(object, "USBConnected"));
+        dockconn = json_object_get_boolean(json_object_object_get(object, "DockPower"));
+        g_debug("Charger connected/disconnected, usb : %s, dock : %s",usbconn?"true":"false",dockconn?"true":"false");
         chargerIsConnected = usbconn | dockconn;
     }
+
 out:
     return true;
 }

@@ -7,16 +7,27 @@ Open webOS component to manage device suspend-resume cycles.
 
 Description
 -----------
-Sleepd is one of the important daemons started when webOS boots. It is responsible for scheduling platform sleeps as soon as it is idle, so that we see optimum battery performance. To achieve this it keeps polling on the system to see if any of the other services or processes need the platform running, and if not it sends the suspend message to all these components (so that they can finish whatever they are doing ASAP and suspend). Sleepd then lets the kernel know that the platform is ready to sleep. Once an interrupt (such as key press) has woken the platform up, sleepd lets the entire system know that the platform is up and running so that all the activities can resume. 
+_Sleepd_ is one of the important daemons started when webOS boots. It is
+responsible for scheduling platform sleeps as soon as it is idle, so that
+we see optimum battery performance. To achieve this it keeps polling on the
+system to see if any of the other services or processes need the platform
+running, and if not it sends the suspend message to all these components
+(so that they can finish whatever they are doing ASAP and suspend).
+_Sleepd_ then lets the kernel know that the platform is ready to sleep.
+Once an interrupt (such as key press) has woken the platform up, sleepd 
+lets the entire system know that the platform is up and running so that all
+the activities can resume. 
 
-Sleepd also manages the RTC alarms on the system by maintaining a SQlite database for all the requested alarms.
+_Sleepd_ also manages the RTC alarms on the system by maintaining a _SQlite_
+database for all the requested alarms.
 
 How to Build on Linux
 =====================
 
 ## Dependencies
 
-Below are the tools and libraries (and their minimum versions) required to build sleepd:
+Below are the tools and libraries (and their minimum versions) required to build
+_sleepd_:
 
 * cmake (version required by openwebos/cmake-modules-webos)
 * gcc 4.6.3
@@ -24,8 +35,9 @@ Below are the tools and libraries (and their minimum versions) required to build
 * libxml2 2.7.2
 * make (any version)
 * openwebos/cjson 1.8.0
+* openwebos/cmake-modules-webos 1.0.0 RC4
 * openwebos/luna-service2 3.0.0
-* openwebos/nyx-lib 3.0.0 RC 1
+* openwebos/nyx-lib 2.0.0
 * openwebos/powerd 4.0.0
 * pkg-config 0.26
 * sqlite3 3.6.20

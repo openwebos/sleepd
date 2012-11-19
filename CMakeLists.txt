@@ -33,31 +33,41 @@ include(FindPkgConfig)
 
 pkg_check_modules(GLIB2 REQUIRED glib-2.0)
 include_directories(${GLIB2_INCLUDE_DIRS})
-webos_add_compiler_flags(ALL ${GLIB2_CFLAGS})
+webos_add_compiler_flags(ALL ${GLIB2_CFLAGS_OTHER})
 
 pkg_check_modules(LIBXML2 REQUIRED libxml-2.0)
 include_directories(${LIBXML2_INCLUDE_DIRS})
-webos_add_compiler_flags(ALL ${LIBXML2_CFLAGS})
+webos_add_compiler_flags(ALL ${LIBXML2_CFLAGS_OTHER})
 
 pkg_check_modules(SQLITE3 REQUIRED sqlite3)
 include_directories(${SQLITE3_INCLUDE_DIRS})
-webos_add_compiler_flags(ALL ${SQLITE3_CFLAGS})
+webos_add_compiler_flags(ALL ${SQLITE3_CFLAGS_OTHER})
 
 pkg_check_modules(LUNASERVICE2 REQUIRED luna-service2)
 include_directories(${LUNASERVICE2_INCLUDE_DIRS})
-webos_add_compiler_flags(ALL ${LUNASERVICE2_CFLAGS})
+webos_add_compiler_flags(ALL ${LUNASERVICE2_CFLAGS_OTHER})
 
 pkg_check_modules(CJSON REQUIRED cjson)
 include_directories(${CJSON_INCLUDE_DIRS})
-webos_add_compiler_flags(ALL ${CJSON_CFLAGS})
+webos_add_compiler_flags(ALL ${CJSON_CFLAGS_OTHER})
 
 pkg_check_modules(NYXLIB REQUIRED nyx)
 include_directories(${NYXLIB_INCLUDE_DIRS})
-webos_add_compiler_flags(ALL ${NYXLIB_CFLAGS})
+webos_add_compiler_flags(ALL ${NYXLIB_CFLAGS_OTHER})
+
+# Nyxlib version 3.0.0 introduced an API break in nyx_system_reboot
+string(REPLACE "." ";" NYXV ${NYXLIB_VERSION})
+string(REPLACE "~" ";" NYXV "${NYXV}")
+list(GET NYXV 0 NYXLIB_MAJOR)
+if(${NYXLIB_MAJOR} GREATER 2)
+	webos_add_compiler_flags(ALL -DREBOOT_TAKES_REASON)
+endif()
+unset(NYXV)
+unset(NYXLIB_MAJOR)
 
 pkg_check_modules(POWERD REQUIRED powerd)
 include_directories(${POWERD_INCLUDE_DIRS})
-webos_add_compiler_flags(ALL ${POWERD_CFLAGS})
+webos_add_compiler_flags(ALL ${POWERD_CFLAGS_OTHER})
 
 webos_add_compiler_flags(ALL -Wall)
 
