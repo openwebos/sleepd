@@ -96,4 +96,4 @@ webos_build_daemon()
 webos_build_system_bus_files()
 
 install(PROGRAMS scripts/public/suspend_action DESTINATION ${WEBOS_INSTALL_SBINDIR})
-install(FILES files/conf/sleepd.conf DESTINATION ${WEBOS_INSTALL_LOCALSTATEDIR}/preferences)
+install(FILES files/conf/sleepd.conf DESTINATION ${WEBOS_INSTALL_LOCALSTATEDIR}/preferences/com.palm.sleep)
