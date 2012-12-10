@@ -24,6 +24,8 @@
  * Main header for all orphan functions.
  */
 
+#include <glib.h>
+
 #include <luna-service2/lunaservice.h>
 #include <nyx/nyx_client.h>
 

@@ -28,6 +28,8 @@
 #include <stdbool.h>
 #include <string.h>
 
+#include <glib.h>
+
 #include <luna-service2/lunaservice.h>
 
 #include "logging.h"
