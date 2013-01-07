@@ -53,6 +53,13 @@ static long unsigned int sTotalMSScreenOff = 0;
 static bool sIsAwake = true;
 static guint sTimerEventSource = 0;
 
+#define SYSFS_A6_DEVICE		"/sys/class/misc/a6_0/regs/"
+#define DEF_BATTERY_PATH	"/sys/devices/w1 bus master/w1_master_slaves/"
+
+static bool sSysfsA6DeviceNodeExists = false;
+static bool sSysfsBatteryPathExists = false;
+
+
 #define NS_PER_MS 1000000
 #define MS_PER_S 1000
 long int
@@ -437,18 +444,21 @@ void read_proc_net_dev()
 
 void get_battery_coulomb_reading(double *rc, double *c)
 {
-	#define SYSFS_A6_DEVICE		"/sys/class/misc/a6_0/regs/"
-	#define	DEF_BATTERY_PATH	"/sys/devices/w1 bus master/w1_master_slaves/"
-
-	if (g_file_test(SYSFS_A6_DEVICE, G_FILE_TEST_IS_DIR))
+	if (sSysfsA6DeviceNodeExists)
 	{
 		SysfsGetDouble(SYSFS_A6_DEVICE "getrawcoulomb", rc);
 		SysfsGetDouble(SYSFS_A6_DEVICE "getcoulomb", c);
 	}
-	else
+	else if (sSysfsBatteryPathExists)
 	{
 		SysfsGetDouble(DEF_BATTERY_PATH "getrawcoulomb", rc);
 		SysfsGetDouble(DEF_BATTERY_PATH "getcoulomb", c);
+	}
+	else
+	{
+		/* we don't have support for getrawcoulomb/getcoulomb */
+		*rc = 0.0;
+		*c = 0.0;
 	}
 }
 
@@ -520,6 +530,9 @@ _sawlog_init(void)
     sTimeScreenOn = time_now_ms();
     sTimeScreenOff = time_now_ms();
     sTimerEventSource = g_timeout_add_full(G_PRIORITY_DEFAULT, PRINT_INTERVAL_MS, sawmill_logger_update, GINT_TO_POINTER(TRUE), NULL);
+
+    sSysfsA6DeviceNodeExists = g_file_test(SYSFS_A6_DEVICE, G_FILE_TEST_IS_DIR);
+    sSysfsBatteryPathExists = g_file_test(DEF_BATTERY_PATH, G_FILE_TEST_IS_DIR);
 
     return 0;
 }
