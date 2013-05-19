@@ -17,9 +17,9 @@
 * LICENSE@@@ */
 
 
-/** 
+/**
 * @file shutdown.c
-* 
+*
 * @brief Two-tiered shutdown system sequence.
 *
 *
@@ -40,7 +40,7 @@
 #define LOG_DOMAIN "SHUTDOWN: "
 
 
-/** 
+/**
 * @brief Contains list of applications and services
 *        interested in shutdown.
 */
@@ -74,8 +74,8 @@ shutdown_reply_to_string(ShutdownReply reply)
     return ShutdownReplyString[reply];
 }
 
-/** 
-* @brief Client information. 
+/**
+* @brief Client information.
 */
 typedef struct {
     char            *id;
@@ -85,7 +85,7 @@ typedef struct {
     double           elapsed;
 } ShutdownClient;
 
-/** 
+/**
 * @brief States.
 */
 enum {
@@ -103,7 +103,7 @@ enum {
 };
 typedef int ShutdownState;
 
-/** 
+/**
 * @brief Events types that drive the state machine.
 */
 typedef enum {
@@ -119,7 +119,7 @@ typedef enum {
     kShutdownEventTimeout,
 } ShutdownEventType;
 
-/** 
+/**
 * @brief Event
 */
 typedef struct {
@@ -386,9 +386,9 @@ client_list_print(GHashTable *client_table)
     }
 }
 
-/** 
+/**
 * @brief Return tristate on apps readiness for shutdown.
-* 
+*
 * @retval 1 if ready, 0 if not ready, -1 if someone nacked.
 */
 static int
@@ -405,9 +405,9 @@ shutdown_apps_ready()
     }
 }
 
-/** 
+/**
 * @brief Return tristate on services readiness for shutdown.
-* 
+*
 * @retval 1 if ready, 0 if not ready, -1 if someone nacked.
 */
 static int
@@ -552,7 +552,7 @@ shutdown_client_cancel_registration_by_name(char * clientName)
  * message is received.
  */
 
-static bool 
+static bool
 state_idle(ShutdownEvent *event, ShutdownState *next)
 {
     switch (event->id)
@@ -570,7 +570,7 @@ state_idle(ShutdownEvent *event, ShutdownState *next)
  * @brief This is the first state that sleepd will go into once the shutdown process has begun.
  * In this state the "shutdownApplications" signal is sent to all the registered clients.
  */
-static bool 
+static bool
 state_shutdown_apps(ShutdownEvent *event, ShutdownState *next)
 {
     client_list_reset_ack_count();
@@ -606,7 +606,7 @@ shutdown_timeout(void *data)
  * @brief Check the client response for the "shutdownApplications" signal. We get to this state either when
  * a client ACKs or we have timed out.
  */
-static bool 
+static bool
 state_shutdown_apps_process(ShutdownEvent *event, ShutdownState *next)
 {
     bool timeout = false;
@@ -654,7 +654,7 @@ state_shutdown_apps_process(ShutdownEvent *event, ShutdownState *next)
  * In this state the "shutdownServices" signal is sent to all the registered clients.
  */
 
-static bool 
+static bool
 state_shutdown_services(ShutdownEvent *event, ShutdownState *next)
 {
     client_list_reset_ack_count();
@@ -666,7 +666,7 @@ state_shutdown_services(ShutdownEvent *event, ShutdownState *next)
         g_timeout_add_seconds(15, (GSourceFunc)shutdown_timeout, NULL);
 
     send_shutdown_services();
-    
+
     return true;
 }
 
@@ -674,7 +674,7 @@ state_shutdown_services(ShutdownEvent *event, ShutdownState *next)
  * @brief Check the client response for the "shutdownServices" signal. We get to this state either when
  * a client ACKs or we have timed out.
  */
-static bool 
+static bool
 state_shutdown_services_process(ShutdownEvent *event, ShutdownState *next)
 {
     bool timeout = false;
@@ -741,7 +741,7 @@ state_shutdown_action(ShutdownEvent *event, ShutdownState *next)
 
     nyx_system_set_alarm(GetNyxSystemDevice(),0,NULL,NULL);
 
-    return false;  
+    return false;
 }
 
 /**
@@ -795,20 +795,20 @@ initiateShutdown(LSHandle *sh, LSMessage *message, void *user_data)
     return true;
 }
 
-/** 
+/**
 * @brief Called by test code to reset state machine to square 1.
-* 
-* @param  sh 
-* @param  message 
-* @param  user_data 
-* 
+*
+* @param  sh
+* @param  message
+* @param  user_data
+*
 * @retval
 */
 static bool
 TESTresetShutdownState(LSHandle *sh, LSMessage *message, void *user_data)
 {
     g_debug("Resetting shutdown state.");
-    
+
     gCurrentState = &kStateMachine[kPowerShutdownNone];
     return true;
 }
@@ -918,11 +918,11 @@ shutdownApplicationsRegister(LSHandle *sh, LSMessage *message,
         object, "clientName"));
 
     client_new_application(clientId, clientName);
-    
+
     bool retVal;
     LSError lserror;
     LSErrorInit(&lserror);
-   
+
     retVal = LSSubscriptionAdd(sh, "shutdownClient",
                                message, &lserror);
     if (!retVal)
@@ -984,7 +984,7 @@ end:
 }
 
 /**
- * @brief Shutdown the machine forcefully by calling "tellbootie"
+ * @brief Shutdown the machine forcefully
  *
  * @param sh
  * @param message with "reason" field for shutdown reason.
@@ -1089,7 +1089,7 @@ shutdown_init(void)
     shutdown_timer = g_timer_new();
 
     gCurrentState = &kStateMachine[kPowerShutdownNone];
-    
+
     LSError lserror;
     LSErrorInit(&lserror);
 
