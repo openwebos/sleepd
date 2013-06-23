@@ -46,7 +46,20 @@
 
 static char *machineName = NULL;
 
-bool chargerIsConnected = false, usbconn = false, dockconn = false;
+/**
+ * Holds the current state of whether or not we're being supplied with power from a charger of any sort.
+ */
+bool chargerIsConnected = false;
+
+/**
+ * Holds the current state of whether or not we're being supplied with power from a USB charger.
+ */
+bool usbconn = false;
+
+/**
+ * Holds the current state of whether or not we're being supplied with power from a dock charger.
+ */
+bool dockconn = false;
 
 /**
  * Obtains the machine specific release name.
@@ -214,6 +227,35 @@ MachineGetToken(const char *token_name, char *buf, int len)
     return 0;
 }
 
+/**
+ * Handler for events from com.palm.power telling us when the charger is plugged/unplugged
+ * 
+ * This function is registered with the com.palm.power service in {@link main()}
+ * to allow us to track the state of the charger and adjust our power plan
+ * accordingly.
+ * 
+ * The "message" parameter will be given to us as a JSON object formatted as
+ * follows:
+ * 
+ * <code>
+ * {
+ *   "Charging" : {
+ *       "USBConnected" : true || false, //whether power is currently being supplied via a USB charger
+ *       "DockPower" : true || false //whether power is currently being supplied via a dock
+ *     }
+ * }
+ * </code>
+ * 
+ * {@link chargerIsConnected} will be changed in response to this message to
+ * indicate the current state of charging.  If power is being supplied to us
+ * by either charging method, {@link chargerIsConnected} is set to true.
+ * 
+ * @param	sh		Pointer to service handle.
+ * @param	message		JSON message which contains the latest information about the state of methods of charging.
+ * @param	user_data	Currently unused.
+ * 
+ * @return			Always returns true.
+ */
 bool ChargerStatus(LSHandle *sh,
                    LSMessage *message, void *user_data)
 {
