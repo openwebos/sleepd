@@ -135,7 +135,12 @@ PrintHookLists(void)
 }
 
 /**
- * Instantiates all the 
+ * Runs all of the initialization hooks
+ * 
+ * This function runs all of the initialization functions which are preloaded
+ * into our {@link namedInitFuncs} array via the use of the {@link INIT_FUNC}
+ * macro using some GCC-specific functionality which runs code to install the
+ * hooks as the sleepd binary is loaded from disk.
  */
 void
 TheOneInit(void)
