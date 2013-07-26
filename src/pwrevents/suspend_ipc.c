@@ -82,6 +82,7 @@ clientCancelByName(LSHandle *sh, LSMessage *message, void *ctx)
     shutdown_client_cancel_registration_by_name(clientName);
 
 out:
+    if (!is_error(object)) json_object_put(object);
     return true;
 }
 

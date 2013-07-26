@@ -87,7 +87,9 @@ main(int argc, char **argv)
     signal(SIGTERM, term_handler);
     signal(SIGINT, term_handler);
 
+#if !GLIB_CHECK_VERSION(2,32,0)
     if (!g_thread_supported ()) g_thread_init (NULL);
+#endif
 
     mainloop = g_main_loop_new(NULL, FALSE);
 

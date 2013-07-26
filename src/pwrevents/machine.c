@@ -34,6 +34,7 @@
 
 #include "main.h"
 #include "suspend.h"
+#include "defines.h"
 
 #include "sysfs.h"
 
@@ -97,7 +98,7 @@ unknown:
 bool
 MachineCanSleep(void)
 {
-    int ret = access("@WEBOS_INSTALL_SBINDIR@/suspend_action", R_OK | X_OK);
+    int ret = access(WEBOS_INSTALL_SBINDIR "/suspend_action", R_OK | X_OK);
     bool suspend_action_present = (ret == 0);
 
     return suspend_action_present &&
@@ -109,7 +110,7 @@ MachineCantSleepReason(void)
 {
     static char reason[512];
 
-    int ret = access("@WEBOS_INSTALL_SBINDIR@/suspend_action", R_OK | X_OK);
+    int ret = access(WEBOS_INSTALL_SBINDIR "/suspend_action", R_OK | X_OK);
     bool suspend_action_present = (ret == 0);
 
     snprintf(reason, 512, "%s %s",
@@ -229,5 +230,6 @@ bool ChargerStatus(LSHandle *sh,
     }
 
 out:
+    if (!is_error(object)) json_object_put(object);
     return true;
 }

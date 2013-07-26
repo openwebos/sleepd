@@ -39,6 +39,7 @@
 
 #include "config.h"
 #include "init.h"
+#include "defines.h"
 
 /**
  * default sleepd config
@@ -61,8 +62,8 @@ SleepConfiguration gSleepConfig =
     .is_running = 1,
     .debug = 0,
 
-    .preference_dir = "@WEBOS_INSTALL_LOCALSTATEDIR@/preferences/com.palm.sleep",
-            
+    .preference_dir = WEBOS_INSTALL_LOCALSTATEDIR "/preferences/com.palm.sleep",
+
     .fasthalt = false
 };
 
@@ -113,7 +114,7 @@ config_init(void)
 
 // Load default values from configuration file
     char *config_path =
-        g_build_filename("@WEBOS_INSTALL_DEFAULTCONFDIR@", "sleepd.conf", NULL);
+        g_build_filename(WEBOS_INSTALL_DEFAULTCONFDIR, "sleepd.conf", NULL);
     retVal = g_key_file_load_from_file(config_file, config_path,
         G_KEY_FILE_NONE, NULL);
     if (!retVal)

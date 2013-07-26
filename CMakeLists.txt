@@ -78,7 +78,7 @@ include_directories(include/internal)
 
 file(GLOB SOURCE_FILES src/alarms/*.c src/pwrevents/*.c src/utils/*.c src/*.c)
 
-webos_configure_source_files(SOURCE_FILES src/config.c src/pwrevents/machine.c)
+webos_configure_header_files(src)
 
 add_executable(sleepd ${SOURCE_FILES})
 target_link_libraries(sleepd 
