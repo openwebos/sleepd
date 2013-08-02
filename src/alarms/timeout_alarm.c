@@ -1024,17 +1024,9 @@ _alarm_timeout_set(LSHandle *sh, LSMessage *message, void *ctx)
         if (ret != 6)
             goto invalid_json;
 
-        int valid_days[12]= {31,28,31,30,31,30,31,31,30,31,30,31};
-        int valid_leapyr_days[12]= {31,29,31,30,31,30,31,31,30,31,30,31};
-
-        if(yyyy % 4 != 0) {
-        	if ((mm < 0 || mm > 12) || (dd < 0 || dd > valid_days[mm-1])) // Not a leap year
-        		goto invalid_json;
+        if (!g_date_valid_dmy(dd, mm, yyyy)) {
+                goto invalid_json;
         }
-        else if ((mm < 0 || mm > 12) || (dd < 0 || dd > valid_leapyr_days[mm-1])) // Leap year
-			goto invalid_json;
-
-
 
         struct tm gm_time;
         memset(&gm_time, 0, sizeof(struct tm));
