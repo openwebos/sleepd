@@ -48,7 +48,7 @@ extern WaitObj gWaitPrepareSuspend;
 extern bool visual_leds_suspend;
 
 /**
- * @defgroup SuspendIPC	Luna methods & signals
+ * @defgroup SuspendIPC Luna methods & signals
  * @ingroup SuspendLogic
  * @brief  Various luna methods & signals to support suspend/resume logic in sleepd, like registering clients
  * for suspend request or prepare suspend signals, start or end activity.
@@ -72,18 +72,27 @@ extern bool visual_leds_suspend;
 bool
 clientCancelByName(LSHandle *sh, LSMessage *message, void *ctx)
 {
-    struct json_object *object = json_tokener_parse(LSMessageGetPayload(message));
-    if (is_error(object)) goto out;
+	struct json_object *object = json_tokener_parse(LSMessageGetPayload(message));
 
-    char *clientName = json_object_get_string(
-               json_object_object_get(object, "clientName"));
+	if (is_error(object))
+	{
+		goto out;
+	}
 
-    PwrEventClientUnregisterByName(clientName);
-    shutdown_client_cancel_registration_by_name(clientName);
+	char *clientName = json_object_get_string(
+	                       json_object_object_get(object, "clientName"));
+
+	PwrEventClientUnregisterByName(clientName);
+	shutdown_client_cancel_registration_by_name(clientName);
 
 out:
-    if (!is_error(object)) json_object_put(object);
-    return true;
+
+	if (!is_error(object))
+	{
+		json_object_put(object);
+	}
+
+	return true;
 }
 
 /**
@@ -97,10 +106,10 @@ out:
 bool
 clientCancel(LSHandle *sh, LSMessage *msg, void *ctx)
 {
-    const char *clientId = LSMessageGetUniqueToken(msg);
-    PwrEventClientUnregister(clientId);
-    shutdown_client_cancel_registration(clientId);
-    return true;
+	const char *clientId = LSMessageGetUniqueToken(msg);
+	PwrEventClientUnregister(clientId);
+	shutdown_client_cancel_registration(clientId);
+	return true;
 }
 
 /**
@@ -114,47 +123,63 @@ clientCancel(LSHandle *sh, LSMessage *msg, void *ctx)
 bool
 activityStartCallback(LSHandle *sh, LSMessage *message, void *user_data)
 {
-    LSError lserror;
-    LSErrorInit(&lserror);
+	LSError lserror;
+	LSErrorInit(&lserror);
 
-    const char *payload = LSMessageGetPayload(message);
+	const char *payload = LSMessageGetPayload(message);
 
-    struct json_object *object = json_tokener_parse(payload);
-    if (is_error(object)) goto malformed_json;
+	struct json_object *object = json_tokener_parse(payload);
 
-    const char *activity_id = json_object_get_string(
-            json_object_object_get(object, "id"));
+	if (is_error(object))
+	{
+		goto malformed_json;
+	}
 
-    int duration_ms = json_object_get_int(
-            json_object_object_get(object, "duration_ms"));
-    if (!activity_id || !strlen(activity_id) || duration_ms <=0) goto malformed_json;
+	const char *activity_id = json_object_get_string(
+	                              json_object_object_get(object, "id"));
 
-    bool ret = PwrEventActivityStart(activity_id, duration_ms);
-    if (!ret)
-    {
-        LSError lserror;
-        LSErrorInit(&lserror);
+	int duration_ms = json_object_get_int(
+	                      json_object_object_get(object, "duration_ms"));
 
-        bool retVal = LSMessageReply(sh, message,
-            "{\"returnValue\":false, \"errorText\":\"Activities Frozen\"}", &lserror);
-        if (!retVal)
-        {
-            LSErrorPrint(&lserror, stderr);
-            LSErrorFree(&lserror);
-        }
-    }
-    else
-    {
-        LSMessageReplySuccess(sh, message);
-    }
-    goto end;
+	if (!activity_id || !strlen(activity_id) || duration_ms <= 0)
+	{
+		goto malformed_json;
+	}
+
+	bool ret = PwrEventActivityStart(activity_id, duration_ms);
+
+	if (!ret)
+	{
+		LSError lserror;
+		LSErrorInit(&lserror);
+
+		bool retVal = LSMessageReply(sh, message,
+		                             "{\"returnValue\":false, \"errorText\":\"Activities Frozen\"}", &lserror);
+
+		if (!retVal)
+		{
+			LSErrorPrint(&lserror, stderr);
+			LSErrorFree(&lserror);
+		}
+	}
+	else
+	{
+		LSMessageReplySuccess(sh, message);
+	}
+
+	goto end;
 
 malformed_json:
-    LSMessageReplyErrorBadJSON(sh, message);
-    goto end;
+	LSMessageReplyErrorBadJSON(sh, message);
+	goto end;
 end:
-    if (!is_error(object)) json_object_put(object);
-    return true;
+
+	if (!is_error(object))
+	{
+		json_object_put(object);
+	}
+
+	return true;
 }
 
 /**
@@ -167,29 +192,42 @@ end:
 bool
 activityEndCallback(LSHandle *sh, LSMessage *message, void *user_data)
 {
-    LSError lserror;
-    LSErrorInit(&lserror);
+	LSError lserror;
+	LSErrorInit(&lserror);
 
-    const char *payload = LSMessageGetPayload(message);
+	const char *payload = LSMessageGetPayload(message);
 
-    struct json_object *object = json_tokener_parse(payload);
-    if (is_error(object)) goto malformed_json;
+	struct json_object *object = json_tokener_parse(payload);
 
-    const char *activity_id = json_object_get_string(
-            json_object_object_get(object, "id"));
-    if (!activity_id || !strlen(activity_id)) goto malformed_json;
+	if (is_error(object))
+	{
+		goto malformed_json;
+	}
 
-    PwrEventActivityStop(activity_id);
+	const char *activity_id = json_object_get_string(
+	                              json_object_object_get(object, "id"));
 
-    LSMessageReplySuccess(sh, message);
-    goto end;
+	if (!activity_id || !strlen(activity_id))
+	{
+		goto malformed_json;
+	}
+
+	PwrEventActivityStop(activity_id);
+
+	LSMessageReplySuccess(sh, message);
+	goto end;
 
 malformed_json:
-    LSMessageReplyErrorBadJSON(sh, message);
-    goto end;
+	LSMessageReplyErrorBadJSON(sh, message);
+	goto end;
 end:
-    if (!is_error(object)) json_object_put(object);
-    return true;
+
+	if (!is_error(object))
+	{
+		json_object_put(object);
+	}
+
+	return true;
 }
 
 /**
@@ -203,75 +241,91 @@ end:
 bool
 identifyCallback(LSHandle *sh, LSMessage *message, void *data)
 {
-    bool retVal;
-    LSError lserror;
-    LSErrorInit(&lserror);
+	bool retVal;
+	LSError lserror;
+	LSErrorInit(&lserror);
 
-    const char *payload = LSMessageGetPayload(message);
+	const char *payload = LSMessageGetPayload(message);
 
-    struct json_object *object = json_tokener_parse(payload);
-    if (is_error(object)) goto malformed_json;
+	struct json_object *object = json_tokener_parse(payload);
 
-    const char *applicationName = LSMessageGetApplicationID(message);
-    const char *clientId = LSMessageGetUniqueToken(message);
+	if (is_error(object))
+	{
+		goto malformed_json;
+	}
 
-    bool subscribe = json_object_get_boolean(
-            json_object_object_get(object, "subscribe"));
+	const char *applicationName = LSMessageGetApplicationID(message);
+	const char *clientId = LSMessageGetUniqueToken(message);
 
-    const char *clientName = json_object_get_string(
-            json_object_object_get(object, "clientName"));
+	bool subscribe = json_object_get_boolean(
+	                     json_object_object_get(object, "subscribe"));
 
-    if (!subscribe || !clientName) goto invalid_syntax;
+	const char *clientName = json_object_get_string(
+	                             json_object_object_get(object, "clientName"));
 
-    if (!LSSubscriptionAdd(sh, "PwrEventsClients", message, &lserror))
-    {
-        goto lserror;
-    }
+	if (!subscribe || !clientName)
+	{
+		goto invalid_syntax;
+	}
 
-    if (!PwrEventClientRegister(clientId)) goto error;
+	if (!LSSubscriptionAdd(sh, "PwrEventsClients", message, &lserror))
+	{
+		goto lserror;
+	}
 
-    struct PwrEventClientInfo *info = PwrEventClientLookup(clientId);
-    if (!info)
-    {
-        goto error;
-    }
+	if (!PwrEventClientRegister(clientId))
+	{
+		goto error;
+	}
 
-    info->clientName = g_strdup(clientName);
-    info->clientId = g_strdup(clientId);
-    info->applicationName = g_strdup(applicationName);
+	struct PwrEventClientInfo *info = PwrEventClientLookup(clientId);
 
-    char *reply = g_strdup_printf(
-        "{\"subscribed\":true,\"clientId\":\"%s\"}", clientId);
+	if (!info)
+	{
+		goto error;
+	}
 
-    g_debug("Pwrevents received identify, reply with %s", reply);
+	info->clientName = g_strdup(clientName);
+	info->clientId = g_strdup(clientId);
+	info->applicationName = g_strdup(applicationName);
 
-    retVal = LSMessageReply(sh, message, reply, &lserror);
+	char *reply = g_strdup_printf(
+	                  "{\"subscribed\":true,\"clientId\":\"%s\"}", clientId);
 
-    g_free(reply);
+	g_debug("Pwrevents received identify, reply with %s", reply);
 
-    if (!retVal)
-    {
-        goto lserror;
-    }
+	retVal = LSMessageReply(sh, message, reply, &lserror);
 
-    goto end;
+	g_free(reply);
+
+	if (!retVal)
+	{
+		goto lserror;
+	}
+
+	goto end;
 
 lserror:
-    LSErrorPrint(&lserror, stderr);
-    LSErrorFree(&lserror);
-    goto end;
+	LSErrorPrint(&lserror, stderr);
+	LSErrorFree(&lserror);
+	goto end;
 error:
-    LSMessageReplyErrorUnknown(sh, message);
-    goto end;
+	LSMessageReplyErrorUnknown(sh, message);
+	goto end;
 invalid_syntax:
-    LSMessageReplyErrorInvalidParams(sh, message);
-    goto end;
+	LSMessageReplyErrorInvalidParams(sh, message);
+	goto end;
 malformed_json:
-    LSMessageReplyErrorBadJSON(sh, message);
-    goto end;
+	LSMessageReplyErrorBadJSON(sh, message);
+	goto end;
 end:
-    if (!is_error(object)) json_object_put(object);
-    return true;
+
+	if (!is_error(object))
+	{
+		json_object_put(object);
+	}
+
+	return true;
 }
 
 /**
@@ -286,12 +340,12 @@ end:
 bool
 forceSuspendCallback(LSHandle *sh, LSMessage *message, void *user_data)
 {
-    TRACE("\tReceived force suspend\n");
-    TriggerSuspend("forced suspend", kPowerEventForceSuspend);
+	TRACE("\tReceived force suspend\n");
+	TriggerSuspend("forced suspend", kPowerEventForceSuspend);
 
-    LSMessageReplySuccess(sh, message);
+	LSMessageReplySuccess(sh, message);
 
-    return true;
+	return true;
 }
 
 /**
@@ -305,10 +359,10 @@ forceSuspendCallback(LSHandle *sh, LSMessage *message, void *user_data)
 bool
 TESTSuspendCallback(LSHandle *sh, LSMessage *message, void *user_data)
 {
-    TRACE("\tReceived TESTSuspend\n");
-    ScheduleIdleCheck(100, false);
-    LSMessageReplySuccess(sh, message);
-    return true;
+	TRACE("\tReceived TESTSuspend\n");
+	ScheduleIdleCheck(100, false);
+	LSMessageReplySuccess(sh, message);
+	return true;
 }
 
 /**
@@ -318,19 +372,21 @@ TESTSuspendCallback(LSHandle *sh, LSMessage *message, void *user_data)
 int
 SendSuspendRequest(const char *message)
 {
-    bool retVal;
-    LSError lserror;
-    LSErrorInit(&lserror);
+	bool retVal;
+	LSError lserror;
+	LSErrorInit(&lserror);
 
-    retVal = LSSignalSend(GetLunaServiceHandle(),
-            "luna://com.palm.sleep/com/palm/power/suspendRequest",
-            "{}", &lserror);
-    if (!retVal)
-    {
-        LSErrorPrint(&lserror, stderr);
-        LSErrorFree(&lserror);
-    }
-    return retVal;
+	retVal = LSSignalSend(GetLunaServiceHandle(),
+	                      "luna://com.palm.sleep/com/palm/power/suspendRequest",
+	                      "{}", &lserror);
+
+	if (!retVal)
+	{
+		LSErrorPrint(&lserror, stderr);
+		LSErrorFree(&lserror);
+	}
+
+	return retVal;
 }
 
 /**
@@ -340,19 +396,21 @@ SendSuspendRequest(const char *message)
 int
 SendPrepareSuspend(const char *message)
 {
-    bool retVal;
-    LSError lserror;
-    LSErrorInit(&lserror);
+	bool retVal;
+	LSError lserror;
+	LSErrorInit(&lserror);
 
-    retVal = LSSignalSend(GetLunaServiceHandle(),
-            "luna://com.palm.sleep/com/palm/power/prepareSuspend",
-            "{}", &lserror);
-    if (!retVal)
-    {
-        LSErrorPrint(&lserror, stderr);
-        LSErrorFree(&lserror);
-    }
-    return retVal;
+	retVal = LSSignalSend(GetLunaServiceHandle(),
+	                      "luna://com.palm.sleep/com/palm/power/prepareSuspend",
+	                      "{}", &lserror);
+
+	if (!retVal)
+	{
+		LSErrorPrint(&lserror, stderr);
+		LSErrorFree(&lserror);
+	}
+
+	return retVal;
 }
 
 /**
@@ -363,26 +421,27 @@ SendPrepareSuspend(const char *message)
 int
 SendResume(int resumetype, char *message)
 {
-    bool retVal;
-    LSError lserror;
-    LSErrorInit(&lserror);
+	bool retVal;
+	LSError lserror;
+	LSErrorInit(&lserror);
 
-    SLEEPDLOG(LOG_INFO, "%s: sending \"resume\" because %s", __func__, message);
+	SLEEPDLOG(LOG_INFO, "%s: sending \"resume\" because %s", __func__, message);
 
-    char *payload = g_strdup_printf(
-             "{\"resumetype\":%d}", resumetype);
+	char *payload = g_strdup_printf(
+	                    "{\"resumetype\":%d}", resumetype);
 
-    retVal = LSSignalSend(GetLunaServiceHandle(),
-        "luna://com.palm.sleep/com/palm/power/resume",
-        payload, &lserror);
-    if (!retVal)
-    {
-        LSErrorPrint(&lserror, stderr);
-        LSErrorFree(&lserror);
-    }
+	retVal = LSSignalSend(GetLunaServiceHandle(),
+	                      "luna://com.palm.sleep/com/palm/power/resume",
+	                      payload, &lserror);
 
-    g_free(payload);
-    return retVal;
+	if (!retVal)
+	{
+		LSErrorPrint(&lserror, stderr);
+		LSErrorFree(&lserror);
+	}
+
+	g_free(payload);
+	return retVal;
 }
 
 
@@ -392,21 +451,23 @@ SendResume(int resumetype, char *message)
 int
 SendSuspended(const char *message)
 {
-    bool retVal;
-    LSError lserror;
-    LSErrorInit(&lserror);
+	bool retVal;
+	LSError lserror;
+	LSErrorInit(&lserror);
 
-    SLEEPDLOG(LOG_INFO, "%s: sending \"suspended\" because %s", __func__, message);
-    
-    retVal = LSSignalSend(GetLunaServiceHandle(),
-        "luna://com.palm.sleep/com/palm/power/suspended",
-        "{}", &lserror);
-    if (!retVal)
-    {
-        LSErrorPrint(&lserror, stderr);
-        LSErrorFree(&lserror);
-    }
-    return retVal;
+	SLEEPDLOG(LOG_INFO, "%s: sending \"suspended\" because %s", __func__, message);
+
+	retVal = LSSignalSend(GetLunaServiceHandle(),
+	                      "luna://com.palm.sleep/com/palm/power/suspended",
+	                      "{}", &lserror);
+
+	if (!retVal)
+	{
+		LSErrorPrint(&lserror, stderr);
+		LSErrorFree(&lserror);
+	}
+
+	return retVal;
 }
 
 /**
@@ -422,41 +483,58 @@ SendSuspended(const char *message)
 bool
 suspendRequestRegister(LSHandle *sh, LSMessage *message, void *data)
 {
-    bool reg;
+	bool reg;
 
-    g_debug("PwrEvent %s %s", __FUNCTION__, LSMessageGetPayload(message));
+	g_debug("PwrEvent %s %s", __FUNCTION__, LSMessageGetPayload(message));
 
-    struct json_object *object = json_tokener_parse(
-            LSMessageGetPayload(message));
-    if (is_error(object)) goto malformed_json;
+	struct json_object *object = json_tokener_parse(
+	                                 LSMessageGetPayload(message));
 
-    const char *clientId = json_object_get_string(
-                    json_object_object_get(object, "clientId"));
-    if (!clientId) goto invalid_syntax;
+	if (is_error(object))
+	{
+		goto malformed_json;
+	}
 
-    struct json_object *json_reg =
-            json_object_object_get(object, "register");
-    if (!json_reg) goto invalid_syntax;
+	const char *clientId = json_object_get_string(
+	                           json_object_object_get(object, "clientId"));
 
-    reg = json_object_get_boolean(json_reg);
+	if (!clientId)
+	{
+		goto invalid_syntax;
+	}
 
-    g_debug("PwrEvent received %s ---%s from %s",
-            LSMessageGetPayload(message),
-            __FUNCTION__, clientId);
+	struct json_object *json_reg =
+	    json_object_object_get(object, "register");
 
-    PwrEventClientSuspendRequestRegister(clientId, reg);
+	if (!json_reg)
+	{
+		goto invalid_syntax;
+	}
 
-    goto end;
+	reg = json_object_get_boolean(json_reg);
+
+	g_debug("PwrEvent received %s ---%s from %s",
+	        LSMessageGetPayload(message),
+	        __FUNCTION__, clientId);
+
+	PwrEventClientSuspendRequestRegister(clientId, reg);
+
+	goto end;
 
 invalid_syntax:
-    LSMessageReplyErrorInvalidParams(sh, message);
-    goto end;
+	LSMessageReplyErrorInvalidParams(sh, message);
+	goto end;
 malformed_json:
-    LSMessageReplyErrorBadJSON(sh, message);
-    goto end;
+	LSMessageReplyErrorBadJSON(sh, message);
+	goto end;
 end:
-    if (!is_error(object)) json_object_put(object);
-    return true;
+
+	if (!is_error(object))
+	{
+		json_object_put(object);
+	}
+
+	return true;
 }
 
 /**
@@ -469,56 +547,72 @@ end:
 bool
 suspendRequestAck(LSHandle *sh, LSMessage *message, void *data)
 {
-    bool ack;
+	bool ack;
 
-    g_debug("PwrEvent %s %s", __FUNCTION__, LSMessageGetPayload(message));
+	g_debug("PwrEvent %s %s", __FUNCTION__, LSMessageGetPayload(message));
 
-    struct json_object *object = json_tokener_parse(
-                                        LSMessageGetPayload(message));
-    if (is_error(object)) goto malformed_json;
+	struct json_object *object = json_tokener_parse(
+	                                 LSMessageGetPayload(message));
 
-    const char *clientId = json_object_get_string(
-                    json_object_object_get(object, "clientId"));
+	if (is_error(object))
+	{
+		goto malformed_json;
+	}
 
-    struct json_object *json_ack =
-            json_object_object_get(object, "ack");
-    if (!json_ack) goto invalid_syntax;
+	const char *clientId = json_object_get_string(
+	                           json_object_object_get(object, "clientId"));
 
-    ack = json_object_get_boolean(json_ack);
+	struct json_object *json_ack =
+	    json_object_object_get(object, "ack");
 
-    struct PwrEventClientInfo *clientInfo = PwrEventClientLookup(clientId);
+	if (!json_ack)
+	{
+		goto invalid_syntax;
+	}
+
+	ack = json_object_get_boolean(json_ack);
+
+	struct PwrEventClientInfo *clientInfo = PwrEventClientLookup(clientId);
 #if 0
-    if (gPowerConfig.debug)
-    {
-        SLEEPDLOG(LOG_WARNING,
-                "PWREVENT-SUSPEND_REQUEST_%s from \"%s\" (%s)",
-                ack ? "ACK" : "NACK",
-                clientInfo && clientInfo->clientName ? clientInfo->clientName : "",
-                clientId);
-    }
+
+	if (gPowerConfig.debug)
+	{
+		SLEEPDLOG(LOG_WARNING,
+		          "PWREVENT-SUSPEND_REQUEST_%s from \"%s\" (%s)",
+		          ack ? "ACK" : "NACK",
+		          clientInfo && clientInfo->clientName ? clientInfo->clientName : "",
+		          clientId);
+	}
+
 #endif
-    if (!ack)
-    {
-        PwrEventClientSuspendRequestNACKIncr(clientInfo);
-    }
 
-    // returns true when all clients have acked.
-    if (PwrEventVoteSuspendRequest(clientId, ack))
-    {
-        WaitObjectSignal(&gWaitSuspendResponse);
-    }
+	if (!ack)
+	{
+		PwrEventClientSuspendRequestNACKIncr(clientInfo);
+	}
 
-    goto end;
+	// returns true when all clients have acked.
+	if (PwrEventVoteSuspendRequest(clientId, ack))
+	{
+		WaitObjectSignal(&gWaitSuspendResponse);
+	}
+
+	goto end;
 
 malformed_json:
-    LSMessageReplyErrorBadJSON(sh, message);
-    goto end;
+	LSMessageReplyErrorBadJSON(sh, message);
+	goto end;
 invalid_syntax:
-    LSMessageReplyErrorInvalidParams(sh, message);
-    goto end;
+	LSMessageReplyErrorInvalidParams(sh, message);
+	goto end;
 end:
-    if (!is_error(object)) json_object_put(object);
-    return true;
+
+	if (!is_error(object))
+	{
+		json_object_put(object);
+	}
+
+	return true;
 }
 
 
@@ -535,37 +629,54 @@ end:
 bool
 prepareSuspendRegister(LSHandle *sh, LSMessage *message, void *data)
 {
-    bool reg;
+	bool reg;
 
-    struct json_object *object = json_tokener_parse(
-            LSMessageGetPayload(message));
-    if (is_error(object)) goto malformed_json;
+	struct json_object *object = json_tokener_parse(
+	                                 LSMessageGetPayload(message));
 
-    const char *clientId = json_object_get_string(
-                    json_object_object_get(object, "clientId"));
-    if (!clientId) goto invalid_syntax;
+	if (is_error(object))
+	{
+		goto malformed_json;
+	}
 
-    struct json_object *json_reg =
-            json_object_object_get(object, "register");
-    if (!json_reg) goto invalid_syntax;
+	const char *clientId = json_object_get_string(
+	                           json_object_object_get(object, "clientId"));
 
-    reg = json_object_get_boolean(json_reg);
+	if (!clientId)
+	{
+		goto invalid_syntax;
+	}
 
-    g_debug("PwrEvent %s reg=%d from %s", __FUNCTION__, reg, clientId);
+	struct json_object *json_reg =
+	    json_object_object_get(object, "register");
 
-    PwrEventClientPrepareSuspendRegister(clientId, reg);
+	if (!json_reg)
+	{
+		goto invalid_syntax;
+	}
 
-    goto end;
+	reg = json_object_get_boolean(json_reg);
+
+	g_debug("PwrEvent %s reg=%d from %s", __FUNCTION__, reg, clientId);
+
+	PwrEventClientPrepareSuspendRegister(clientId, reg);
+
+	goto end;
 
 invalid_syntax:
-    LSMessageReplyErrorInvalidParams(sh, message);
-    goto end;
+	LSMessageReplyErrorInvalidParams(sh, message);
+	goto end;
 malformed_json:
-    LSMessageReplyErrorBadJSON(sh, message);
-    goto end;
+	LSMessageReplyErrorBadJSON(sh, message);
+	goto end;
 end:
-    if (!is_error(object)) json_object_put(object);
-    return true;
+
+	if (!is_error(object))
+	{
+		json_object_put(object);
+	}
+
+	return true;
 }
 
 /**
@@ -579,162 +690,197 @@ end:
 bool
 prepareSuspendAck(LSHandle *sh, LSMessage *message, void *data)
 {
-    bool ack;
+	bool ack;
 
-    struct json_object *object = json_tokener_parse(
-                                        LSMessageGetPayload(message));
-    if (is_error(object)) goto malformed_json;
+	struct json_object *object = json_tokener_parse(
+	                                 LSMessageGetPayload(message));
 
-    const char *clientId = json_object_get_string(
-                    json_object_object_get(object, "clientId"));
+	if (is_error(object))
+	{
+		goto malformed_json;
+	}
 
-    struct json_object *json_ack =
-            json_object_object_get(object, "ack");
-    if (!json_ack) goto invalid_syntax;
+	const char *clientId = json_object_get_string(
+	                           json_object_object_get(object, "clientId"));
 
-    ack = json_object_get_boolean(json_ack);
+	struct json_object *json_ack =
+	    json_object_object_get(object, "ack");
 
-    struct PwrEventClientInfo *clientInfo = PwrEventClientLookup(clientId);
+	if (!json_ack)
+	{
+		goto invalid_syntax;
+	}
+
+	ack = json_object_get_boolean(json_ack);
+
+	struct PwrEventClientInfo *clientInfo = PwrEventClientLookup(clientId);
 #if 0
-    if (gPowerConfig.debug)
-    {
-        SLEEPDLOG(LOG_WARNING,
-                "PWREVENT-PREPARE_SUSPEND_%s from \"%s\" (%s)",
-                ack ? "ACK" : "NACK",
-                clientInfo && clientInfo->clientName ? clientInfo->clientName : "",
-                clientId);
-    }
-#endif
-    if (!ack)
-    {
-        PwrEventClientPrepareSuspendNACKIncr(clientInfo);
-    }
-    
-    // returns true when all clients have acked.
-    if (PwrEventVotePrepareSuspend(clientId, ack))
-    {
-        WaitObjectSignal(&gWaitPrepareSuspend);
-    }
 
-    goto end;
+	if (gPowerConfig.debug)
+	{
+		SLEEPDLOG(LOG_WARNING,
+		          "PWREVENT-PREPARE_SUSPEND_%s from \"%s\" (%s)",
+		          ack ? "ACK" : "NACK",
+		          clientInfo && clientInfo->clientName ? clientInfo->clientName : "",
+		          clientId);
+	}
+
+#endif
+
+	if (!ack)
+	{
+		PwrEventClientPrepareSuspendNACKIncr(clientInfo);
+	}
+
+	// returns true when all clients have acked.
+	if (PwrEventVotePrepareSuspend(clientId, ack))
+	{
+		WaitObjectSignal(&gWaitPrepareSuspend);
+	}
+
+	goto end;
 invalid_syntax:
-    LSMessageReplyErrorInvalidParams(sh, message);
-    goto end;
+	LSMessageReplyErrorInvalidParams(sh, message);
+	goto end;
 malformed_json:
-    LSMessageReplyErrorBadJSON(sh, message);
-    goto end;
+	LSMessageReplyErrorBadJSON(sh, message);
+	goto end;
 end:
-    if (!is_error(object)) json_object_put(object);
-    return true;
+
+	if (!is_error(object))
+	{
+		json_object_put(object);
+	}
+
+	return true;
 }
 
-/** 
+/**
 * @brief Turn on/off visual leds suspend via luna-service.
-* 
-* @param  sh 
-* @param  message 
-* @param  data 
-* 
+*
+* @param  sh
+* @param  message
+* @param  data
+*
 * @retval
 */
 bool
 visualLedSuspendCallback(LSHandle *sh, LSMessage *message, void *data)
 {
-    struct json_object *object = json_tokener_parse(
-                                        LSMessageGetPayload(message));
-    if (is_error(object)) goto malformed_json;
+	struct json_object *object = json_tokener_parse(
+	                                 LSMessageGetPayload(message));
 
-    struct json_object *json_on = json_object_object_get(object, "on");
-    if (!json_on) goto invalid_syntax;
+	if (is_error(object))
+	{
+		goto malformed_json;
+	}
 
-    bool on = json_object_get_boolean(json_on);
-    gSleepConfig.visual_leds_suspend = on;
+	struct json_object *json_on = json_object_object_get(object, "on");
 
-    goto end;
+	if (!json_on)
+	{
+		goto invalid_syntax;
+	}
+
+	bool on = json_object_get_boolean(json_on);
+	gSleepConfig.visual_leds_suspend = on;
+
+	goto end;
 invalid_syntax:
-    LSMessageReplyErrorInvalidParams(sh, message);
-    goto end;
+	LSMessageReplyErrorInvalidParams(sh, message);
+	goto end;
 malformed_json:
-    LSMessageReplyErrorBadJSON(sh, message);
-    goto end;
+	LSMessageReplyErrorBadJSON(sh, message);
+	goto end;
 end:
-    if (!is_error(object)) json_object_put(object);
-    return true;
+
+	if (!is_error(object))
+	{
+		json_object_put(object);
+	}
+
+	return true;
 }
 
 void
 SuspendIPCInit(void)
 {
-    bool retVal;
-    LSError lserror;
-    LSErrorInit(&lserror);
+	bool retVal;
+	LSError lserror;
+	LSErrorInit(&lserror);
 
-    retVal = LSSubscriptionSetCancelFunction(GetLunaServiceHandle(),
-        clientCancel, NULL, &lserror);
-    if (!retVal)
-    {
-		SLEEPDLOG(LOG_CRIT,"Error in setting cancel function");
+	retVal = LSSubscriptionSetCancelFunction(GetLunaServiceHandle(),
+	         clientCancel, NULL, &lserror);
+
+	if (!retVal)
+	{
+		SLEEPDLOG(LOG_CRIT, "Error in setting cancel function");
 		goto ls_error;
-    }
+	}
 
 ls_error:
 	LSErrorPrint(&lserror, stderr);
-    LSErrorFree(&lserror);
+	LSErrorFree(&lserror);
 
 }
 
-LSMethod com_palm_suspend_methods[] = {
+LSMethod com_palm_suspend_methods[] =
+{
 
-    /* suspend methods*/
+	/* suspend methods*/
 
-    { "suspendRequestRegister", suspendRequestRegister },
-    { "prepareSuspendRegister", prepareSuspendRegister },
-    { "suspendRequestAck", suspendRequestAck },
-    { "prepareSuspendAck", prepareSuspendAck },
-    { "forceSuspend", forceSuspendCallback },
-    { "identify", identifyCallback },
-    { "clientCancelByName", clientCancelByName },
+	{ "suspendRequestRegister", suspendRequestRegister },
+	{ "prepareSuspendRegister", prepareSuspendRegister },
+	{ "suspendRequestAck", suspendRequestAck },
+	{ "prepareSuspendAck", prepareSuspendAck },
+	{ "forceSuspend", forceSuspendCallback },
+	{ "identify", identifyCallback },
+	{ "clientCancelByName", clientCancelByName },
 
-    { "visualLedSuspend", visualLedSuspendCallback },
-    { "TESTSuspend", TESTSuspendCallback },
+	{ "visualLedSuspend", visualLedSuspendCallback },
+	{ "TESTSuspend", TESTSuspendCallback },
 
-    { },
+	{ },
 };
 
-LSMethod com_palm_suspend_public_methods[] = {
-    { "activityStart", activityStartCallback },
-    { "activityEnd", activityEndCallback },
+LSMethod com_palm_suspend_public_methods[] =
+{
+	{ "activityStart", activityStartCallback },
+	{ "activityEnd", activityEndCallback },
 };
 
-LSSignal com_palm_suspend_signals[] = {
+LSSignal com_palm_suspend_signals[] =
+{
 
-    /* Suspend signals */
+	/* Suspend signals */
 
-    { "suspendRequest" },
-    { "prepareSuspend" },
-    { "suspended" },
-    { "resume" },
+	{ "suspendRequest" },
+	{ "prepareSuspend" },
+	{ "suspended" },
+	{ "resume" },
 
-    { },
+	{ },
 };
 
 int com_palm_suspend_lunabus_init(void)
 {
-    LSError lserror;
-    LSErrorInit(&lserror);
+	LSError lserror;
+	LSErrorInit(&lserror);
 
-    if (!LSPalmServiceRegisterCategory(GetPalmService(), "/com/palm/power",
-    		com_palm_suspend_public_methods, com_palm_suspend_methods, com_palm_suspend_signals,
-        NULL, &lserror))
-    {
-        goto error;
-    }
-    return 0;
+	if (!LSPalmServiceRegisterCategory(GetPalmService(), "/com/palm/power",
+	                                   com_palm_suspend_public_methods, com_palm_suspend_methods,
+	                                   com_palm_suspend_signals,
+	                                   NULL, &lserror))
+	{
+		goto error;
+	}
+
+	return 0;
 
 error:
-    LSErrorPrint(&lserror, stderr);
-    LSErrorFree(&lserror);
-    return -1;
+	LSErrorPrint(&lserror, stderr);
+	LSErrorFree(&lserror);
+	return -1;
 }
 
 INIT_FUNC(INIT_FUNC_END, com_palm_suspend_lunabus_init);

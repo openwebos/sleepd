@@ -25,7 +25,7 @@
 
 bool MachineCanSleep(void);
 
-const char * MachineCantSleepReason(void);
+const char *MachineCantSleepReason(void);
 
 void MachineSleep(void);
 

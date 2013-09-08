@@ -68,7 +68,8 @@
  * @brief Power States
  */
 
-enum {
+enum
+{
     kPowerStateOn,
     kPowerStateOnIdle,
     kPowerStateSuspendRequest,
@@ -81,7 +82,8 @@ enum {
 };
 typedef int PowerState;
 
-enum {
+enum
+{
     kResumeTypeKernel,
     kResumeTypeActivity,
     kResumeAbortSuspend
@@ -89,18 +91,19 @@ enum {
 
 static char *resume_type_descriptions[] =
 {
-    "kernel",
-    "pwrevent_activity",
-    "pwrevent_non_idle",
-    "abort_suspend",
+	"kernel",
+	"pwrevent_activity",
+	"pwrevent_non_idle",
+	"abort_suspend",
 };
 
 // A PowerStateProc processes the current state and returns the next state
-typedef PowerState (*PowerStateProc)(void);
+typedef PowerState(*PowerStateProc)(void);
 
-typedef struct {
-    PowerState     state; // currently unused
-    PowerStateProc function;
+typedef struct
+{
+	PowerState     state; // currently unused
+	PowerStateProc function;
 } PowerStateNode;
 
 /*
@@ -117,7 +120,7 @@ static PowerState StateActivityResume(void);
 static PowerState StateAbortSuspend(void);
 
 /**
- * @defgroup SuspendLogic	Suspend/Resume State Machine
+ * @defgroup SuspendLogic   Suspend/Resume State Machine
  * @ingroup PowerEvents
  * @brief Suspend/Resume state machine:
  *
@@ -163,15 +166,16 @@ static PowerState StateAbortSuspend(void);
 
 
 // Mapping from state to function handling state.
-static const PowerStateNode kStateMachine[kPowerStateLast] = {
-    [kPowerStateOn]             = { kPowerStateOn,               StateOn },
-    [kPowerStateOnIdle]         = { kPowerStateOnIdle,           StateOnIdle },
-    [kPowerStateSuspendRequest] = { kPowerStateSuspendRequest,   StateSuspendRequest },
-    [kPowerStatePrepareSuspend] = { kPowerStatePrepareSuspend,   StatePrepareSuspend },
-    [kPowerStateSleep]          = { kPowerStateSleep,            StateSleep },
-    [kPowerStateKernelResume]   = { kPowerStateKernelResume,     StateKernelResume },
-    [kPowerStateActivityResume] = { kPowerStateActivityResume,   StateActivityResume },
-    [kPowerStateAbortSuspend]   = { kPowerStateAbortSuspend,     StateAbortSuspend }
+static const PowerStateNode kStateMachine[kPowerStateLast] =
+{
+	[kPowerStateOn]             = { kPowerStateOn,               StateOn },
+	[kPowerStateOnIdle]         = { kPowerStateOnIdle,           StateOnIdle },
+	[kPowerStateSuspendRequest] = { kPowerStateSuspendRequest,   StateSuspendRequest },
+	[kPowerStatePrepareSuspend] = { kPowerStatePrepareSuspend,   StatePrepareSuspend },
+	[kPowerStateSleep]          = { kPowerStateSleep,            StateSleep },
+	[kPowerStateKernelResume]   = { kPowerStateKernelResume,     StateKernelResume },
+	[kPowerStateActivityResume] = { kPowerStateActivityResume,   StateActivityResume },
+	[kPowerStateAbortSuspend]   = { kPowerStateAbortSuspend,     StateAbortSuspend }
 };
 
 // current state
@@ -205,8 +209,8 @@ int SendSuspended(const char *message);
 void
 StateLoopShutdown(void)
 {
-    WaitObjectSignal(&gWaitSuspendResponse);
-    WaitObjectSignal(&gWaitPrepareSuspend);
+	WaitObjectSignal(&gWaitSuspendResponse);
+	WaitObjectSignal(&gWaitPrepareSuspend);
 }
 
 /**
@@ -216,14 +220,14 @@ StateLoopShutdown(void)
 void
 ScheduleIdleCheck(int interval_ms, bool fromPoll)
 {
-    if (idle_scheduler)
-    {
-        g_timer_source_set_interval(idle_scheduler, interval_ms, fromPoll);
-    }
-    else
-    {
-        g_warning("%s: idle_scheduler not yet initialized", __func__);
-    }
+	if (idle_scheduler)
+	{
+		g_timer_source_set_interval(idle_scheduler, interval_ms, fromPoll);
+	}
+	else
+	{
+		g_warning("%s: idle_scheduler not yet initialized", __func__);
+	}
 }
 
 static nyx_device_handle_t nyxDev = NULL;
@@ -235,10 +239,16 @@ static bool
 IsDisplayOn(void)
 {
 	nyx_led_controller_state_t state = NYX_LED_CONTROLLER_STATE_UNKNOWN;
-	if(nyxDev)	
-    		nyx_led_controller_get_state(nyxDev,NYX_LED_CONTROLLER_LCD, &state);
+
+	if (nyxDev)
+	{
+		nyx_led_controller_get_state(nyxDev, NYX_LED_CONTROLLER_LCD, &state);
+	}
 	else
+	{
 		state = NYX_LED_CONTROLLER_STATE_ON;
+	}
+
 	return (state == NYX_LED_CONTROLLER_STATE_ON);
 }
 
@@ -248,7 +258,7 @@ IsDisplayOn(void)
 void
 switchoffDisplay(void)
 {
-	if(nyxDev)
+	if (nyxDev)
 	{
 		nyx_led_controller_effect_t effect;
 		effect.required.effect = NYX_LED_CONTROLLER_EFFECT_LED_SET;
@@ -257,7 +267,8 @@ switchoffDisplay(void)
 		effect.backlight.brightness_lcd = -1;
 		nyx_led_controller_execute_effect(nyxDev, effect);
 	}
-    	return;
+
+	return;
 }
 
 
@@ -269,117 +280,134 @@ switchoffDisplay(void)
 gboolean
 IdleCheck(gpointer ctx)
 {
-    bool suspend_active;
-    bool activity_idle;
+	bool suspend_active;
+	bool activity_idle;
 
-    struct timespec now;
-    int next_idle_ms = 0;
+	struct timespec now;
+	int next_idle_ms = 0;
 
-    if (IsDisplayOn())	goto resched;
+	if (IsDisplayOn())
+	{
+		goto resched;
+	}
 
-    ClockGetTime(&now);
+	ClockGetTime(&now);
 
-    /*
-     * Enforce that the minimum time awake must be at least
-     * after_resume_idle_ms.
-     */
-    struct timespec last_wake;
-    last_wake.tv_sec = sTimeOnWake.tv_sec;
-    last_wake.tv_nsec = sTimeOnWake.tv_nsec;
+	/*
+	 * Enforce that the minimum time awake must be at least
+	 * after_resume_idle_ms.
+	 */
+	struct timespec last_wake;
+	last_wake.tv_sec = sTimeOnWake.tv_sec;
+	last_wake.tv_nsec = sTimeOnWake.tv_nsec;
 
-    ClockAccumMs(&last_wake, gSleepConfig.after_resume_idle_ms);
-    if (ClockTimeIsGreater(&last_wake, &now))
-    {
-        struct timespec diff;
-        ClockDiff(&diff, &last_wake, &now);
-        next_idle_ms = ClockGetMs(&diff);
-        goto resched;
-    }
+	ClockAccumMs(&last_wake, gSleepConfig.after_resume_idle_ms);
 
-    /*
-     * Do not sleep if any activity is still active
-     */
+	if (ClockTimeIsGreater(&last_wake, &now))
+	{
+		struct timespec diff;
+		ClockDiff(&diff, &last_wake, &now);
+		next_idle_ms = ClockGetMs(&diff);
+		goto resched;
+	}
 
-    activity_idle = PwrEventActivityCanSleep(&now);
-    if (!activity_idle)
-    {
-        SLEEPDLOG(LOG_WARNING,
-            "%s: can't sleep because an activity is active: ",
-            __FUNCTION__);
-    }
+	/*
+	 * Do not sleep if any activity is still active
+	 */
 
-    if (PwrEventActivityCount(&sTimeOnWake))
-    {
-        SLEEPDLOG(LOG_INFO, "Activities since wake: ");
-        PwrEventActivityPrintFrom(&sTimeOnWake);
-    }
-    PwrEventActivityRemoveExpired(&now);
+	activity_idle = PwrEventActivityCanSleep(&now);
 
-    {
-        time_t expiry = 0;
-        gchar * app_id = NULL;
-        gchar * key = NULL;
-        if (timeout_get_next_wakeup(&expiry,&app_id,&key)) {
-        	g_free(app_id);
-        	g_free(key);
-        	int next_wake = expiry - rtc_wall_time();
-        	if(next_wake >= 0 && next_wake <= gSleepConfig.wait_alarms_s)
-        	{
-        		SLEEPDLOG(LOG_DEBUG, "%s: Not going to sleep because an alarm is "
-        				"about to fire in %d sec\n", __func__,next_wake);
-        		goto resched;
-        	}
-        }
+	if (!activity_idle)
+	{
+		SLEEPDLOG(LOG_WARNING,
+		          "%s: can't sleep because an activity is active: ",
+		          __FUNCTION__);
+	}
 
-    }
+	if (PwrEventActivityCount(&sTimeOnWake))
+	{
+		SLEEPDLOG(LOG_INFO, "Activities since wake: ");
+		PwrEventActivityPrintFrom(&sTimeOnWake);
+	}
 
-    /*
-     * Wait for LunaSysMgr to deposit suspend_active token
-     * to signify that the system is completely booted and ready for
-     * suspend activity.
-     */
+	PwrEventActivityRemoveExpired(&now);
 
-    suspend_active = (access("/tmp/suspend_active", R_OK) == 0);
-    if (suspend_active && activity_idle)
-    {
-        TriggerSuspend("device is idle.", kPowerEventIdleEvent);
-    }
+	{
+		time_t expiry = 0;
+		gchar *app_id = NULL;
+		gchar *key = NULL;
+
+		if (timeout_get_next_wakeup(&expiry, &app_id, &key))
+		{
+			g_free(app_id);
+			g_free(key);
+			int next_wake = expiry - rtc_wall_time();
+
+			if (next_wake >= 0 && next_wake <= gSleepConfig.wait_alarms_s)
+			{
+				SLEEPDLOG(LOG_DEBUG, "%s: Not going to sleep because an alarm is "
+				          "about to fire in %d sec\n", __func__, next_wake);
+				goto resched;
+			}
+		}
+
+	}
+
+	/*
+	 * Wait for LunaSysMgr to deposit suspend_active token
+	 * to signify that the system is completely booted and ready for
+	 * suspend activity.
+	 */
+
+	suspend_active = (access("/tmp/suspend_active", R_OK) == 0);
+
+	if (suspend_active && activity_idle)
+	{
+		TriggerSuspend("device is idle.", kPowerEventIdleEvent);
+	}
 
 resched:
-    {
-        long wait_idle_ms = gSleepConfig.wait_idle_ms;
-        long max_duration_ms = PwrEventActivityGetMaxDuration(&now);
+	{
+		long wait_idle_ms = gSleepConfig.wait_idle_ms;
+		long max_duration_ms = PwrEventActivityGetMaxDuration(&now);
 
-        if (max_duration_ms > wait_idle_ms)
-            wait_idle_ms = max_duration_ms;
+		if (max_duration_ms > wait_idle_ms)
+		{
+			wait_idle_ms = max_duration_ms;
+		}
 
-        if (next_idle_ms > wait_idle_ms)
-            wait_idle_ms = next_idle_ms;
+		if (next_idle_ms > wait_idle_ms)
+		{
+			wait_idle_ms = next_idle_ms;
+		}
 
-        ScheduleIdleCheck(wait_idle_ms, true);
-    }
-    return TRUE;
+		ScheduleIdleCheck(wait_idle_ms, true);
+	}
+	return TRUE;
 }
 
-static gboolean 
+static gboolean
 SuspendStateUpdate(PowerEvent power_event)
 {
-    gSuspendEvent = power_event;
-    PowerState next_state = kPowerStateLast;
-    do {
-        next_state = gCurrentStateNode.function();
+	gSuspendEvent = power_event;
+	PowerState next_state = kPowerStateLast;
 
-        if (next_state != kPowerStateLast)
-        {
-            gCurrentStateNode = kStateMachine[next_state];
-        }
+	do
+	{
+		next_state = gCurrentStateNode.function();
 
-    } while (next_state != kPowerStateLast);
+		if (next_state != kPowerStateLast)
+		{
+			gCurrentStateNode = kStateMachine[next_state];
+		}
 
-    return FALSE;
+	}
+	while (next_state != kPowerStateLast);
+
+	return FALSE;
 }
 
-/** 
+/**
  * @brief Suspend state machine is run in this thread.
  *
  * @param  ctx
@@ -389,25 +417,25 @@ SuspendStateUpdate(PowerEvent power_event)
 void *
 SuspendThread(void *ctx)
 {
-    GMainContext *context;
-    context = g_main_context_new();
+	GMainContext *context;
+	context = g_main_context_new();
 
-    suspend_loop = g_main_loop_new(context, FALSE);
-    g_main_context_unref(context);
+	suspend_loop = g_main_loop_new(context, FALSE);
+	g_main_context_unref(context);
 
-    idle_scheduler = g_timer_source_new(
-        gSleepConfig.wait_idle_ms, gSleepConfig.wait_idle_granularity_ms);
+	idle_scheduler = g_timer_source_new(
+	                     gSleepConfig.wait_idle_ms, gSleepConfig.wait_idle_granularity_ms);
 
-    g_source_set_callback((GSource*)idle_scheduler,
-                        IdleCheck, NULL, NULL);
-    g_source_attach((GSource*)idle_scheduler,
-                g_main_loop_get_context(suspend_loop));
-    g_source_unref((GSource*)idle_scheduler);
+	g_source_set_callback((GSource *)idle_scheduler,
+	                      IdleCheck, NULL, NULL);
+	g_source_attach((GSource *)idle_scheduler,
+	                g_main_loop_get_context(suspend_loop));
+	g_source_unref((GSource *)idle_scheduler);
 
-    g_main_loop_run(suspend_loop);
-    g_main_loop_unref(suspend_loop);
+	g_main_loop_run(suspend_loop);
+	g_main_loop_unref(suspend_loop);
 
-    return NULL;
+	return NULL;
 }
 
 /**
@@ -420,27 +448,30 @@ SuspendThread(void *ctx)
 static PowerState
 StateOn(void)
 {
-    PowerState next_state;
+	PowerState next_state;
 
-    switch (gSuspendEvent) {
-    case kPowerEventForceSuspend:
-        next_state = kPowerStateSuspendRequest;
-        break;
-    case kPowerEventIdleEvent:
-        next_state = kPowerStateOnIdle;
-        break;
-    case kPowerEventNone:
-    default:
-        next_state = kPowerStateLast;
-        break;
-    }
+	switch (gSuspendEvent)
+	{
+		case kPowerEventForceSuspend:
+			next_state = kPowerStateSuspendRequest;
+			break;
 
-    gSuspendEvent = kPowerEventNone;
+		case kPowerEventIdleEvent:
+			next_state = kPowerStateOnIdle;
+			break;
 
-    return next_state;
+		case kPowerEventNone:
+		default:
+			next_state = kPowerStateLast;
+			break;
+	}
+
+	gSuspendEvent = kPowerEventNone;
+
+	return next_state;
 }
 
-/** 
+/**
  * @brief The device goes into this state from "On" state, if the IdleCheck thread thinks that
  * the device can now suspend. However if the device is connected to charger and the "suspend_with_charger"
  * option is "false", the device will again go back to the "On" state, else the device will go into the next
@@ -452,12 +483,12 @@ StateOn(void)
 static PowerState
 StateOnIdle(void)
 {
-    if (!MachineCanSleep())
-    {
-        return kPowerStateOn;
-    }
+	if (!MachineCanSleep())
+	{
+		return kPowerStateOn;
+	}
 
-    return kPowerStateSuspendRequest;
+	return kPowerStateSuspendRequest;
 }
 
 #define START_LOG_COUNT 8
@@ -476,69 +507,83 @@ StateOnIdle(void)
 static PowerState
 StateSuspendRequest(void)
 {
-    int timeout = 0;
-    static int successive_ons=0;
-    static int log_count = START_LOG_COUNT;
-    PowerState ret;
+	int timeout = 0;
+	static int successive_ons = 0;
+	static int log_count = START_LOG_COUNT;
+	PowerState ret;
 
-    ClockGetTime(&sTimeOnStartSuspend);
+	ClockGetTime(&sTimeOnStartSuspend);
 
-    WaitObjectLock(&gWaitSuspendResponse);
+	WaitObjectLock(&gWaitSuspendResponse);
 
-    PwrEventVoteInit();
+	PwrEventVoteInit();
 
-    SendSuspendRequest("");
+	SendSuspendRequest("");
 
-    // send msg to ask for permission to sleep
-    TRACE("\tSent \"suspend request\", waiting up to %dms",
-            gSleepConfig.wait_suspend_response_ms);
+	// send msg to ask for permission to sleep
+	TRACE("\tSent \"suspend request\", waiting up to %dms",
+	      gSleepConfig.wait_suspend_response_ms);
 
-    if (!PwrEventClientsApproveSuspendRequest())
-    {
-        // wait for the message to arrive
-        timeout = WaitObjectWait(&gWaitSuspendResponse,
-                gSleepConfig.wait_suspend_response_ms);
-    }
+	if (!PwrEventClientsApproveSuspendRequest())
+	{
+		// wait for the message to arrive
+		timeout = WaitObjectWait(&gWaitSuspendResponse,
+		                         gSleepConfig.wait_suspend_response_ms);
+	}
 
-    WaitObjectUnlock(&gWaitSuspendResponse);
+	WaitObjectUnlock(&gWaitSuspendResponse);
 
-    PwrEventClientTablePrint(G_LOG_LEVEL_DEBUG);
+	PwrEventClientTablePrint(G_LOG_LEVEL_DEBUG);
 
-    if (timeout)
-    {
-        gchar * silent_clients = PwrEventGetSuspendRequestNORSPList();
-        g_warning("\tWe timed-out waiting for daemons (%s) to acknowledge SuspendRequest.", silent_clients);
-        g_free(silent_clients);
-        ret = kPowerStatePrepareSuspend;
-    }
-    else if (PwrEventClientsApproveSuspendRequest())
-    {
-        TRACE("\tSuspend response: go to prepare_suspend.");
-        ret = kPowerStatePrepareSuspend;
-    }
-    else
-    {
-        TRACE("\tSuspend response: stay awake.");
-        ret = kPowerStateOn;
-    }
+	if (timeout)
+	{
+		gchar *silent_clients = PwrEventGetSuspendRequestNORSPList();
+		g_warning("\tWe timed-out waiting for daemons (%s) to acknowledge SuspendRequest.",
+		          silent_clients);
+		g_free(silent_clients);
+		ret = kPowerStatePrepareSuspend;
+	}
+	else if (PwrEventClientsApproveSuspendRequest())
+	{
+		TRACE("\tSuspend response: go to prepare_suspend.");
+		ret = kPowerStatePrepareSuspend;
+	}
+	else
+	{
+		TRACE("\tSuspend response: stay awake.");
+		ret = kPowerStateOn;
+	}
 
-    if (ret == kPowerStateOn) {
-        successive_ons++;
-        if (successive_ons >= log_count) {
-            g_warning("%s: %d successive votes to NACK SuspendRequest since previous suspend", __func__, successive_ons);
-            PwrEventClientTablePrint(G_LOG_LEVEL_WARNING);
-            if (log_count >= MAX_LOG_COUNT_INCREASE_RATE)
-                log_count += MAX_LOG_COUNT_INCREASE_RATE;
-            else
-                log_count *= 2;
-            g_warning("%s: next count before logging is %d", __func__, log_count);
-        }
-    } else {
-        // reset the exponential counter
-        successive_ons = 0;
-        log_count = START_LOG_COUNT;
-    }
-    return ret;
+	if (ret == kPowerStateOn)
+	{
+		successive_ons++;
+
+		if (successive_ons >= log_count)
+		{
+			g_warning("%s: %d successive votes to NACK SuspendRequest since previous suspend",
+			          __func__, successive_ons);
+			PwrEventClientTablePrint(G_LOG_LEVEL_WARNING);
+
+			if (log_count >= MAX_LOG_COUNT_INCREASE_RATE)
+			{
+				log_count += MAX_LOG_COUNT_INCREASE_RATE;
+			}
+			else
+			{
+				log_count *= 2;
+			}
+
+			g_warning("%s: next count before logging is %d", __func__, log_count);
+		}
+	}
+	else
+	{
+		// reset the exponential counter
+		successive_ons = 0;
+		log_count = START_LOG_COUNT;
+	}
+
+	return ret;
 }
 
 /**
@@ -552,67 +597,79 @@ StateSuspendRequest(void)
 static PowerState
 StatePrepareSuspend(void)
 {
-    int timeout = 0;
-    static int successive_ons=0;
-    static int log_count = START_LOG_COUNT;
+	int timeout = 0;
+	static int successive_ons = 0;
+	static int log_count = START_LOG_COUNT;
 
-    WaitObjectLock(&gWaitPrepareSuspend);
+	WaitObjectLock(&gWaitPrepareSuspend);
 
-    // send suspend request to all power-aware daemons.
-    SendPrepareSuspend("");
+	// send suspend request to all power-aware daemons.
+	SendPrepareSuspend("");
 
-    TRACE("\tSent \"prepare suspend\", waiting up to %dms",
-            gSleepConfig.wait_prepare_suspend_ms);
+	TRACE("\tSent \"prepare suspend\", waiting up to %dms",
+	      gSleepConfig.wait_prepare_suspend_ms);
 
-    if (!PwrEventClientsApprovePrepareSuspend())
-    {
+	if (!PwrEventClientsApprovePrepareSuspend())
+	{
 
-        timeout = WaitObjectWait(&gWaitPrepareSuspend,
-                gSleepConfig.wait_prepare_suspend_ms);
-    }
+		timeout = WaitObjectWait(&gWaitPrepareSuspend,
+		                         gSleepConfig.wait_prepare_suspend_ms);
+	}
 
-    WaitObjectUnlock(&gWaitPrepareSuspend);
+	WaitObjectUnlock(&gWaitPrepareSuspend);
 
-    PwrEventClientTablePrint(G_LOG_LEVEL_DEBUG);
+	PwrEventClientTablePrint(G_LOG_LEVEL_DEBUG);
 
-    if (timeout)
-    {
-        gchar * silent_clients = PwrEventGetPrepareSuspendNORSPList();
-        g_warning("\tWe timed-out waiting for daemons (%s) to acknowledge PrepareSuspend.", silent_clients);
-        gchar * clients = PwrEventGetClientTable();
-        SLEEPDLOG(LOG_CRIT,"== NORSP clients ==\n %s\n == client table ==\n %s", silent_clients, clients);
-        g_free(clients);
-        g_free(silent_clients);
+	if (timeout)
+	{
+		gchar *silent_clients = PwrEventGetPrepareSuspendNORSPList();
+		g_warning("\tWe timed-out waiting for daemons (%s) to acknowledge PrepareSuspend.",
+		          silent_clients);
+		gchar *clients = PwrEventGetClientTable();
+		SLEEPDLOG(LOG_CRIT, "== NORSP clients ==\n %s\n == client table ==\n %s",
+		          silent_clients, clients);
+		g_free(clients);
+		g_free(silent_clients);
 
-        // reset the exponential counter
-        successive_ons = 0;
-        log_count = START_LOG_COUNT;
-        return kPowerStateSleep;
-    }
-    else if (PwrEventClientsApprovePrepareSuspend())
-    {
-        TRACE("\tClients all approved prepare_suspend.");
-        // reset the exponential counter
-        successive_ons = 0;
-        log_count = START_LOG_COUNT;
-        return kPowerStateSleep;
-    }
-    else
-    {
-        // if any daemons nacked, quit suspend...
-        TRACE("\tSome daemon nacked prepare_suspend: stay awake.");
-        successive_ons++;
-        if (successive_ons >= log_count) {
-            g_warning("%s: %d successive votes to NACK PrepareSuspend since previous suspend", __func__, successive_ons);
-            PwrEventClientTablePrint(G_LOG_LEVEL_WARNING);
-            if (log_count >= MAX_LOG_COUNT_INCREASE_RATE)
-                log_count += MAX_LOG_COUNT_INCREASE_RATE;
-            else
-                log_count *= 2;
-            g_warning("%s: next count before logging is %d", __func__, log_count);
-        }
-        return kPowerStateAbortSuspend;
-    }
+		// reset the exponential counter
+		successive_ons = 0;
+		log_count = START_LOG_COUNT;
+		return kPowerStateSleep;
+	}
+	else if (PwrEventClientsApprovePrepareSuspend())
+	{
+		TRACE("\tClients all approved prepare_suspend.");
+		// reset the exponential counter
+		successive_ons = 0;
+		log_count = START_LOG_COUNT;
+		return kPowerStateSleep;
+	}
+	else
+	{
+		// if any daemons nacked, quit suspend...
+		TRACE("\tSome daemon nacked prepare_suspend: stay awake.");
+		successive_ons++;
+
+		if (successive_ons >= log_count)
+		{
+			g_warning("%s: %d successive votes to NACK PrepareSuspend since previous suspend",
+			          __func__, successive_ons);
+			PwrEventClientTablePrint(G_LOG_LEVEL_WARNING);
+
+			if (log_count >= MAX_LOG_COUNT_INCREASE_RATE)
+			{
+				log_count += MAX_LOG_COUNT_INCREASE_RATE;
+			}
+			else
+			{
+				log_count *= 2;
+			}
+
+			g_warning("%s: next count before logging is %d", __func__, log_count);
+		}
+
+		return kPowerStateAbortSuspend;
+	}
 }
 
 /**
@@ -621,31 +678,31 @@ StatePrepareSuspend(void)
 void
 InstrumentOnSleep(void)
 {
-    struct timespec diff;
-    struct timespec diffAwake;
+	struct timespec diff;
+	struct timespec diffAwake;
 
-    ClockGetTime(&sTimeOnSuspended);
-    get_time_now(&sSuspendRTC);
+	ClockGetTime(&sTimeOnSuspended);
+	get_time_now(&sSuspendRTC);
 
-    ClockDiff(&diff, &sTimeOnSuspended, &sTimeOnStartSuspend);
+	ClockDiff(&diff, &sTimeOnSuspended, &sTimeOnStartSuspend);
 
-    ClockDiff(&diffAwake, &sTimeOnSuspended, &sTimeOnWake);
+	ClockDiff(&diffAwake, &sTimeOnSuspended, &sTimeOnWake);
 
-    GString *str = g_string_new ("");
+	GString *str = g_string_new("");
 
-    g_string_append_printf(str, "PWREVENT-SLEEP after ");
-    ClockStr(str, &diffAwake);
-    g_string_append(str, "... decision took ");
-    ClockStr(str, &diff);
+	g_string_append_printf(str, "PWREVENT-SLEEP after ");
+	ClockStr(str, &diffAwake);
+	g_string_append(str, "... decision took ");
+	ClockStr(str, &diff);
 
-    SLEEPDLOG(LOG_INFO, "%s", str->str);
+	SLEEPDLOG(LOG_INFO, "%s", str->str);
 
-    g_string_free(str, TRUE);
+	g_string_free(str, TRUE);
 
-    /* Rate-limited print NACK sources. */
-    PwrEventClientPrintNACKRateLimited();
+	/* Rate-limited print NACK sources. */
+	PwrEventClientPrintNACKRateLimited();
 
-    sawmill_logger_record_sleep(diffAwake);
+	sawmill_logger_record_sleep(diffAwake);
 }
 
 /**
@@ -654,34 +711,36 @@ InstrumentOnSleep(void)
 void
 InstrumentOnWake(int resumeType)
 {
-    ClockGetTime(&sTimeOnWake);
-    get_time_now(&sWakeRTC);
+	ClockGetTime(&sTimeOnWake);
+	get_time_now(&sWakeRTC);
 
-    struct timespec diffAsleep;
-    ClockDiff(&diffAsleep, &sWakeRTC, &sSuspendRTC);
+	struct timespec diffAsleep;
+	ClockDiff(&diffAsleep, &sWakeRTC, &sSuspendRTC);
 
-    struct tm tm;
-    gmtime_r(&(diffAsleep.tv_sec), &tm);
+	struct tm tm;
+	gmtime_r(&(diffAsleep.tv_sec), &tm);
 
-    if (tm.tm_year >= 70)
-        tm.tm_year -= 70; // EPOCH returned by time() starts at 1970
+	if (tm.tm_year >= 70)
+	{
+		tm.tm_year -= 70;    // EPOCH returned by time() starts at 1970
+	}
 
-    GString *str = g_string_new("PWREVENT-WOKE after ");
-    g_string_append_printf(str, "%lds : ", diffAsleep.tv_sec);
+	GString *str = g_string_new("PWREVENT-WOKE after ");
+	g_string_append_printf(str, "%lds : ", diffAsleep.tv_sec);
 
-    if (tm.tm_year > 0)
-    {
-        g_string_append_printf(str, "%d years, ", tm.tm_year);
-    }
+	if (tm.tm_year > 0)
+	{
+		g_string_append_printf(str, "%d years, ", tm.tm_year);
+	}
 
-    g_string_append_printf(str, "%d days, %dh-%dm-%ds\n", tm.tm_yday,
-        tm.tm_hour, tm.tm_min, tm.tm_sec);
+	g_string_append_printf(str, "%d days, %dh-%dm-%ds\n", tm.tm_yday,
+	                       tm.tm_hour, tm.tm_min, tm.tm_sec);
 
-    SLEEPDLOG(LOG_INFO, "%s (%s)", str->str, resume_type_descriptions[resumeType]);
+	SLEEPDLOG(LOG_INFO, "%s (%s)", str->str, resume_type_descriptions[resumeType]);
 
-    g_string_free(str, TRUE);
+	g_string_free(str, TRUE);
 
-    sawmill_logger_record_wake(diffAsleep);
+	sawmill_logger_record_wake(diffAsleep);
 }
 
 
@@ -696,55 +755,64 @@ InstrumentOnWake(int resumeType)
 static PowerState
 StateSleep(void)
 {
-    int nextState = kPowerStateKernelResume; // assume a normal sleep ended by some kernel event
+	int nextState =
+	    kPowerStateKernelResume; // assume a normal sleep ended by some kernel event
 
-    TRACE("State Sleep");
+	TRACE("State Sleep");
 
-    TRACE("\tWe will try to go to sleep now");
+	TRACE("\tWe will try to go to sleep now");
 
-    SendSuspended("attempting to suspend (We are trying to sleep)");
+	SendSuspended("attempting to suspend (We are trying to sleep)");
 
-    {
-        time_t expiry = 0;
-        gchar * app_id = NULL;
-        gchar * key = NULL;
-        if (timeout_get_next_wakeup(&expiry,&app_id,&key)) {
-            SLEEPDLOG(LOG_INFO, "%s: waking in %ld seconds for %s\n", __func__, expiry - rtc_wall_time(), key);
-        }
-        g_free(app_id);
-        g_free(key);
-    }
+	{
+		time_t expiry = 0;
+		gchar *app_id = NULL;
+		gchar *key = NULL;
 
-    InstrumentOnSleep();
+		if (timeout_get_next_wakeup(&expiry, &app_id, &key))
+		{
+			SLEEPDLOG(LOG_INFO, "%s: waking in %ld seconds for %s\n", __func__,
+			          expiry - rtc_wall_time(), key);
+		}
 
-    // save the current time to disk in case battery is pulled.
-    timesaver_save();
+		g_free(app_id);
+		g_free(key);
+	}
 
-    // if any activities were started, abort suspend.
-    if (gSuspendEvent != kPowerEventForceSuspend &&
-        !PwrEventFreezeActivities(&sTimeOnSuspended))
-    {
-        SLEEPDLOG(LOG_WARNING,
-            "%s: aborting sleep because of current activity: ", __FUNCTION__);
-        PwrEventActivityPrintFrom(&sTimeOnSuspended);
-        nextState = kPowerStateActivityResume;
-        goto resume;
-    }
+	InstrumentOnSleep();
 
-    if(MachineCanSleep()) {
-    	// let the system sleep now.
-        _queue_next_timeout(false);
-    	MachineSleep();
-    }
-    else {
-    	SLEEPDLOG(LOG_INFO,"We couldn't sleep because a new gadget_event was received");
-    	nextState= kPowerStateAbortSuspend;
-    }
-    // We woke up from sleep.
-    PwrEventThawActivities();
+	// save the current time to disk in case battery is pulled.
+	timesaver_save();
+
+	// if any activities were started, abort suspend.
+	if (gSuspendEvent != kPowerEventForceSuspend &&
+	        !PwrEventFreezeActivities(&sTimeOnSuspended))
+	{
+		SLEEPDLOG(LOG_WARNING,
+		          "%s: aborting sleep because of current activity: ", __FUNCTION__);
+		PwrEventActivityPrintFrom(&sTimeOnSuspended);
+		nextState = kPowerStateActivityResume;
+		goto resume;
+	}
+
+	if (MachineCanSleep())
+	{
+		// let the system sleep now.
+		_queue_next_timeout(false);
+		MachineSleep();
+	}
+	else
+	{
+		SLEEPDLOG(LOG_INFO,
+		          "We couldn't sleep because a new gadget_event was received");
+		nextState = kPowerStateAbortSuspend;
+	}
+
+	// We woke up from sleep.
+	PwrEventThawActivities();
 
 resume:
-    return nextState;
+	return nextState;
 }
 
 /**
@@ -756,10 +824,10 @@ resume:
 static PowerState
 StateAbortSuspend(void)
 {
-    TRACE("\tAbort suspend.");
-    SendResume(kResumeAbortSuspend,"resume (suspend aborted)");
+	TRACE("\tAbort suspend.");
+	SendResume(kResumeAbortSuspend, "resume (suspend aborted)");
 
-    return kPowerStateOn;
+	return kPowerStateOn;
 }
 
 
@@ -772,22 +840,23 @@ StateAbortSuspend(void)
 static PowerState
 _stateResume(int resumeType)
 {
-    TRACE("\tWe awoke");
+	TRACE("\tWe awoke");
 
-    char *resumeDesc = g_strdup_printf("resume (%s)", resume_type_descriptions[resumeType]);
-    SendResume(resumeType, resumeDesc);
-    g_free(resumeDesc);
+	char *resumeDesc = g_strdup_printf("resume (%s)",
+	                                   resume_type_descriptions[resumeType]);
+	SendResume(resumeType, resumeDesc);
+	g_free(resumeDesc);
 
 #ifdef ASSERT_ON_BUG
-    WaitObjectSignal(&gWaitSuspendResponse);
+	WaitObjectSignal(&gWaitSuspendResponse);
 #endif
 
-    InstrumentOnWake(resumeType);
+	InstrumentOnWake(resumeType);
 
-    // if we are inactive in 1s, go back to sleep.
-    ScheduleIdleCheck(gSleepConfig.after_resume_idle_ms, false);
+	// if we are inactive in 1s, go back to sleep.
+	ScheduleIdleCheck(gSleepConfig.after_resume_idle_ms, false);
 
-    return kPowerStateOn;
+	return kPowerStateOn;
 }
 
 /**
@@ -800,7 +869,7 @@ _stateResume(int resumeType)
 static PowerState
 StateKernelResume(void)
 {
-    return _stateResume(kResumeTypeKernel);
+	return _stateResume(kResumeTypeKernel);
 }
 
 /**
@@ -814,7 +883,7 @@ StateKernelResume(void)
 static PowerState
 StateActivityResume(void)
 {
-    return _stateResume(kResumeTypeActivity);
+	return _stateResume(kResumeTypeActivity);
 }
 
 /**
@@ -824,48 +893,49 @@ StateActivityResume(void)
 static int
 SuspendInit(void)
 {
-    pthread_t suspend_tid;
+	pthread_t suspend_tid;
 
-    // initialize wake time.
-    ClockGetTime(&sTimeOnWake);
+	// initialize wake time.
+	ClockGetTime(&sTimeOnWake);
 
-    WaitObjectInit(&gWaitSuspendResponse);
-    WaitObjectInit(&gWaitPrepareSuspend);
+	WaitObjectInit(&gWaitSuspendResponse);
+	WaitObjectInit(&gWaitPrepareSuspend);
 
-    WaitObjectInit(&gWaitResumeMessage);
+	WaitObjectInit(&gWaitResumeMessage);
 
-    com_palm_suspend_lunabus_init();
-    PwrEventClientTableCreate();
+	com_palm_suspend_lunabus_init();
+	PwrEventClientTableCreate();
 
-    SuspendIPCInit();
+	SuspendIPCInit();
 
-    if (gSleepConfig.visual_leds_suspend)
+	if (gSleepConfig.visual_leds_suspend)
 	{
-	    if(SysfsWriteString("/sys/class/leds/core_navi_center/brightness", "15") < 0)
-	    {
+		if (SysfsWriteString("/sys/class/leds/core_navi_center/brightness", "15") < 0)
+		{
 			SysfsWriteString(
-						"/sys/class/leds/core_navi_left/brightness", "100");
+			    "/sys/class/leds/core_navi_left/brightness", "100");
 			SysfsWriteString(
-						"/sys/class/leds/core_navi_right/brightness", "100");
+			    "/sys/class/leds/core_navi_right/brightness", "100");
 
-	    }
+		}
 	}
 
-    gCurrentStateNode = kStateMachine[kPowerStateOn];
+	gCurrentStateNode = kStateMachine[kPowerStateOn];
 
-    if (pthread_create(&suspend_tid, NULL, SuspendThread, NULL))
-    {
-        g_critical("%s Could not create SuspendThread\n", __FUNCTION__);
-        abort();
-    }
+	if (pthread_create(&suspend_tid, NULL, SuspendThread, NULL))
+	{
+		g_critical("%s Could not create SuspendThread\n", __FUNCTION__);
+		abort();
+	}
 
 	int ret = nyx_device_open(NYX_DEVICE_LED_CONTROLLER, "Default", &nyxDev);
-	if(ret != NYX_ERROR_NONE)
+
+	if (ret != NYX_ERROR_NONE)
 	{
-		SLEEPDLOG(LOG_CRIT,"Sleepd: Unable to open the nyx device led controller");
+		SLEEPDLOG(LOG_CRIT, "Sleepd: Unable to open the nyx device led controller");
 	}
 
-    return 0;
+	return 0;
 }
 
 /**
@@ -874,12 +944,12 @@ SuspendInit(void)
 void
 TriggerSuspend(const char *reason, PowerEvent event)
 {
-    GSource *source = g_idle_source_new ();
-    g_source_set_callback (source,
-        (GSourceFunc)SuspendStateUpdate, (void*)event, NULL);
-    g_source_attach (source, g_main_loop_get_context(suspend_loop));
+	GSource *source = g_idle_source_new();
+	g_source_set_callback(source,
+	                      (GSourceFunc)SuspendStateUpdate, (void *)event, NULL);
+	g_source_attach(source, g_main_loop_get_context(suspend_loop));
 
-    g_source_unref (source);
+	g_source_unref(source);
 }
 
 INIT_FUNC(INIT_FUNC_END, SuspendInit);

@@ -50,7 +50,7 @@ GLogLevelFlags GetLogLevel();
 
 int DebugInit(void);
 
-void _good_assert(const char * cond_str, bool cond);
+void _good_assert(const char *cond_str, bool cond);
 
 #ifdef ASSERT_ON_BUG
 #define BUG() {                     \

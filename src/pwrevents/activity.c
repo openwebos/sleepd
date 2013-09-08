@@ -51,13 +51,13 @@
 #define LOG_DOMAIN "PWREVENT-ACTIVITY: "
 
 /**
- * @defgroup PowerEvents	Power Events
+ * @defgroup PowerEvents    Power Events
  * @ingroup Sleepd
  * @brief Power events are all the events that affect system power.
  */
 
 /**
- * @defgroup PowerActivities	Power Activities
+ * @defgroup PowerActivities    Power Activities
  * @ingroup PowerEvents
  * @brief Duration of time to prevent the system from sleeping
  */
@@ -71,12 +71,13 @@
 * @brief Structure for maintaining all registered activities.
 */
 
-typedef struct {
-    struct timespec start_time;
-    struct timespec end_time;
-    int duration_ms;
+typedef struct
+{
+	struct timespec start_time;
+	struct timespec end_time;
+	int duration_ms;
 
-    char *activity_id;
+	char *activity_id;
 } Activity;
 
 GQueue *activity_roster = NULL;
@@ -93,12 +94,12 @@ bool gFrozen = false;
 static int
 _activity_init(void)
 {
-    if (!activity_roster)
-    {
-        activity_roster = g_queue_new();
-    }
+	if (!activity_roster)
+	{
+		activity_roster = g_queue_new();
+	}
 
-    return 0;
+	return 0;
 }
 
 /**
@@ -113,25 +114,25 @@ _activity_init(void)
 static Activity *
 _activity_new(const char *activity_id, int duration_ms)
 {
-    if (duration_ms >= ACTIVITY_MAX_DURATION_MS)
-    {
-        duration_ms = ACTIVITY_MAX_DURATION_MS;
-    }
+	if (duration_ms >= ACTIVITY_MAX_DURATION_MS)
+	{
+		duration_ms = ACTIVITY_MAX_DURATION_MS;
+	}
 
-    Activity *activity = g_new0(Activity, 1);
+	Activity *activity = g_new0(Activity, 1);
 
-    activity->activity_id = g_strdup(activity_id);
-    activity->duration_ms = duration_ms;
+	activity->activity_id = g_strdup(activity_id);
+	activity->duration_ms = duration_ms;
 
-    // end += duration
-    ClockGetTime(&activity->start_time);
+	// end += duration
+	ClockGetTime(&activity->start_time);
 
-    activity->end_time.tv_sec = activity->start_time.tv_sec;
-    activity->end_time.tv_nsec = activity->start_time.tv_nsec;
+	activity->end_time.tv_sec = activity->start_time.tv_sec;
+	activity->end_time.tv_nsec = activity->start_time.tv_nsec;
 
-    ClockAccumMs(&activity->end_time, activity->duration_ms);
+	ClockAccumMs(&activity->end_time, activity->duration_ms);
 
-    return activity;
+	return activity;
 }
 
 /**
@@ -145,11 +146,11 @@ _activity_new(const char *activity_id, int duration_ms)
 static void
 _activity_free(Activity *activity)
 {
-    if (activity)
-    {
-        g_free(activity->activity_id);
-        g_free(activity);
-    }
+	if (activity)
+	{
+		g_free(activity->activity_id);
+		g_free(activity);
+	}
 }
 
 /**
@@ -159,20 +160,20 @@ _activity_free(Activity *activity)
  * @param b
  *
  * @retval 1 if expiry time of a is greater than b
- * 		   0 otherwise
+ *         0 otherwise
  */
 
 static int
 _activity_compare(Activity *a, Activity *b)
 {
-    if (ClockTimeIsGreater(&a->end_time, &b->end_time))
-    {
-        return 1;
-    }
-    else
-    {
-        return -1;
-    }
+	if (ClockTimeIsGreater(&a->end_time, &b->end_time))
+	{
+		return 1;
+	}
+	else
+	{
+		return -1;
+	}
 }
 
 
@@ -186,62 +187,64 @@ _activity_compare(Activity *a, Activity *b)
 static int
 _activity_count(struct timespec *from)
 {
-    int count = 0;
+	int count = 0;
 
-    pthread_mutex_lock(&activity_mutex);
+	pthread_mutex_lock(&activity_mutex);
 
-    GList *iter;
-    for (iter = activity_roster->head; iter != NULL; iter = iter->next)
-    {
-        Activity *a = (Activity*)iter->data;
+	GList *iter;
 
-         // now > activity.end_time
-        if (ClockTimeIsGreater(from, &a->end_time))
-        {
-            continue;
-        }
-        count++;
-    }
+	for (iter = activity_roster->head; iter != NULL; iter = iter->next)
+	{
+		Activity *a = (Activity *)iter->data;
 
-    pthread_mutex_unlock(&activity_mutex);
+		// now > activity.end_time
+		if (ClockTimeIsGreater(from, &a->end_time))
+		{
+			continue;
+		}
 
-    return count;
+		count++;
+	}
+
+	pthread_mutex_unlock(&activity_mutex);
+
+	return count;
 }
 
-/** 
-* @brief Insert an activity into sorted list. 
-* 
-* @param  activity 
+/**
+* @brief Insert an activity into sorted list.
+*
+* @param  activity
 * @return false if the activity cannot be created (if activities are frozen).
 */
-static bool 
+static bool
 _activity_insert(const char *activity_id, int duration_ms)
 {
-    bool ret = true;
+	bool ret = true;
 
-    pthread_mutex_lock(&activity_mutex);
+	pthread_mutex_lock(&activity_mutex);
 
-    if (gFrozen)
-    {
-        ret = false;
-        goto end;
-    }
+	if (gFrozen)
+	{
+		ret = false;
+		goto end;
+	}
 
-    Activity *activity = _activity_new(activity_id, duration_ms);
+	Activity *activity = _activity_new(activity_id, duration_ms);
 
-    g_queue_insert_sorted(activity_roster, activity,
-            (GCompareDataFunc)_activity_compare, NULL);
+	g_queue_insert_sorted(activity_roster, activity,
+	                      (GCompareDataFunc)_activity_compare, NULL);
 
 end:
-    pthread_mutex_unlock(&activity_mutex);
-    return ret;
+	pthread_mutex_unlock(&activity_mutex);
+	return ret;
 }
 
 
 /**
  * @brief Delete the activity from the global activity queue.
  *
- * @param activity_id	The activity which needs to be deleted.
+ * @param activity_id   The activity which needs to be deleted.
  *
  * @retval The activity that was deleted.
  */
@@ -249,25 +252,26 @@ end:
 static Activity *
 _activity_remove_id(const char *activity_id)
 {
-    Activity *ret_activity = NULL;
-    pthread_mutex_lock(&activity_mutex);
+	Activity *ret_activity = NULL;
+	pthread_mutex_lock(&activity_mutex);
 
-    GList *iter;
-    for (iter = activity_roster->head; iter != NULL; iter = iter->next)
-    {
-        Activity *a = (Activity*)iter->data;
+	GList *iter;
 
-        if (strcmp(a->activity_id, activity_id) == 0)
-        {
-            ret_activity = a;
-            g_queue_delete_link(activity_roster, iter);
-            break;
-        }
-    }
-    
-    pthread_mutex_unlock(&activity_mutex);
+	for (iter = activity_roster->head; iter != NULL; iter = iter->next)
+	{
+		Activity *a = (Activity *)iter->data;
 
-    return ret_activity;
+		if (strcmp(a->activity_id, activity_id) == 0)
+		{
+			ret_activity = a;
+			g_queue_delete_link(activity_roster, iter);
+			break;
+		}
+	}
+
+	pthread_mutex_unlock(&activity_mutex);
+
+	return ret_activity;
 }
 
 /**
@@ -282,8 +286,8 @@ _activity_remove_id(const char *activity_id)
 static bool
 _activity_expired(Activity *a, struct timespec *now)
 {
-    // end > now
-    return ClockTimeIsGreater(now, &a->end_time);
+	// end > now
+	return ClockTimeIsGreater(now, &a->end_time);
 }
 
 
@@ -300,33 +304,41 @@ _activity_expired(Activity *a, struct timespec *now)
 static Activity *
 _activity_obtain_unlocked(struct timespec *now, bool getmax)
 {
-    Activity *ret_activity = NULL;
-    GList *iter;
+	Activity *ret_activity = NULL;
+	GList *iter;
 
-    if (getmax)
-        iter = activity_roster->tail;
-    else
-        iter = activity_roster->head;
+	if (getmax)
+	{
+		iter = activity_roster->tail;
+	}
+	else
+	{
+		iter = activity_roster->head;
+	}
 
-    while (iter != NULL)
-    {
-        Activity *a = (Activity*)iter->data;
+	while (iter != NULL)
+	{
+		Activity *a = (Activity *)iter->data;
 
-        // return first activity that is not expired.
-        if (!_activity_expired(a, now))
-        {
-            ret_activity = a;
-            goto end;
-        }
+		// return first activity that is not expired.
+		if (!_activity_expired(a, now))
+		{
+			ret_activity = a;
+			goto end;
+		}
 
-        if (getmax)
-            iter = iter->prev;
-        else
-            iter = iter->next;
-    }
+		if (getmax)
+		{
+			iter = iter->prev;
+		}
+		else
+		{
+			iter = iter->next;
+		}
+	}
 
 end:
-    return ret_activity;
+	return ret_activity;
 }
 
 /**
@@ -340,7 +352,7 @@ end:
 static Activity *
 _activity_obtain_min_unlocked(struct timespec *now)
 {
-    return _activity_obtain_unlocked(now, false);
+	return _activity_obtain_unlocked(now, false);
 }
 
 /**
@@ -355,7 +367,7 @@ _activity_obtain_min_unlocked(struct timespec *now)
 static Activity *
 _activity_obtain_max_unlocked(struct timespec *now)
 {
-    return _activity_obtain_unlocked(now, true);
+	return _activity_obtain_unlocked(now, true);
 }
 
 /**
@@ -369,15 +381,15 @@ _activity_obtain_max_unlocked(struct timespec *now)
 static Activity *
 _activity_obtain_min(struct timespec *now)
 {
-    Activity *ret_activity = NULL;
+	Activity *ret_activity = NULL;
 
-    pthread_mutex_lock(&activity_mutex);
+	pthread_mutex_lock(&activity_mutex);
 
-    ret_activity = _activity_obtain_min_unlocked(now);
+	ret_activity = _activity_obtain_min_unlocked(now);
 
-    pthread_mutex_unlock(&activity_mutex);
+	pthread_mutex_unlock(&activity_mutex);
 
-    return ret_activity;
+	return ret_activity;
 }
 
 /**
@@ -389,18 +401,18 @@ _activity_obtain_min(struct timespec *now)
  */
 
 
-static Activity * 
+static Activity *
 _activity_obtain_max(struct timespec *now)
 {
-    Activity *max_activity = NULL;
+	Activity *max_activity = NULL;
 
-    pthread_mutex_lock(&activity_mutex);
+	pthread_mutex_lock(&activity_mutex);
 
-    max_activity = _activity_obtain_max_unlocked(now);
+	max_activity = _activity_obtain_max_unlocked(now);
 
-    pthread_mutex_unlock(&activity_mutex);
+	pthread_mutex_unlock(&activity_mutex);
 
-    return max_activity;
+	return max_activity;
 }
 
 /**
@@ -415,32 +427,34 @@ _activity_obtain_max(struct timespec *now)
 static void
 _activity_print(struct timespec *from, struct timespec *now)
 {
-    struct timespec diff;
-    int diff_ms;
+	struct timespec diff;
+	int diff_ms;
 
-    pthread_mutex_lock(&activity_mutex);
+	pthread_mutex_lock(&activity_mutex);
 
-    GList *iter;
-    for (iter = activity_roster->head; iter != NULL; iter = iter->next)
-    {
-        Activity *a = (Activity*)iter->data;
+	GList *iter;
 
-         // now > activity.end_time
-        if (ClockTimeIsGreater(from, &a->end_time))
-        {
-            continue;
-        }
+	for (iter = activity_roster->head; iter != NULL; iter = iter->next)
+	{
+		Activity *a = (Activity *)iter->data;
 
-        // end_time - now
-        ClockDiff(&diff, &a->end_time, now);
+		// now > activity.end_time
+		if (ClockTimeIsGreater(from, &a->end_time))
+		{
+			continue;
+		}
 
-        diff_ms = diff.tv_sec * 1000 + diff.tv_nsec / 1000000;
-       
-        SLEEPDLOG(LOG_INFO, "(%s) for %d ms, expiry in %d ms",
-               a->activity_id, a->duration_ms,
-               diff_ms);
-    }
-    pthread_mutex_unlock(&activity_mutex);
+		// end_time - now
+		ClockDiff(&diff, &a->end_time, now);
+
+		diff_ms = diff.tv_sec * 1000 + diff.tv_nsec / 1000000;
+
+		SLEEPDLOG(LOG_INFO, "(%s) for %d ms, expiry in %d ms",
+		          a->activity_id, a->duration_ms,
+		          diff_ms);
+	}
+
+	pthread_mutex_unlock(&activity_mutex);
 }
 
 /**
@@ -452,129 +466,138 @@ _activity_print(struct timespec *from, struct timespec *now)
 static void
 _activity_stop_activity(Activity *a)
 {
-    if (!a) return;
-    _activity_free(a);
+	if (!a)
+	{
+		return;
+	}
+
+	_activity_free(a);
 }
 
-/** 
+/**
 * @brief Stop and free an activity.
-* 
-* @param  activity_id 
+*
+* @param  activity_id
 */
 static void
 _activity_stop(const char *activity_id)
 {
-    Activity *a = _activity_remove_id(activity_id);
-    if (!a) { return; }
+	Activity *a = _activity_remove_id(activity_id);
 
-    _activity_stop_activity(a);
+	if (!a)
+	{
+		return;
+	}
+
+	_activity_stop_activity(a);
 }
 
-/** 
+/**
 * @brief Starts an activity.
-* 
-* @param  activity_id 
-* @param  duration_ms 
+*
+* @param  activity_id
+* @param  duration_ms
 */
-static bool 
-_activity_start(const char * activity_id, int duration_ms)
+static bool
+_activity_start(const char *activity_id, int duration_ms)
 {
-    /* replace exising *activity_id' */
-    _activity_stop(activity_id);
+	/* replace exising *activity_id' */
+	_activity_stop(activity_id);
 
-    return _activity_insert(activity_id, duration_ms);
+	return _activity_insert(activity_id, duration_ms);
 }
 
-/** 
+/**
 * @brief Start an activity by the name of 'activity_id'.
-* 
+*
 * @param  activity_id  Should be in format com.domain.reverse-serial.
-* @param  duration_ms 
+* @param  duration_ms
 *
 * @return false if the activity could not be created... (activities may be frozen).
 */
 bool
 PwrEventActivityStart(const char *activity_id, int duration_ms)
 {
-    bool retVal;
+	bool retVal;
 
-    retVal = _activity_start(activity_id, duration_ms);
+	retVal = _activity_start(activity_id, duration_ms);
 
-    SLEEPDLOG(LOG_INFO, "%s: (%s) for %dms => %s",
-        __FUNCTION__, activity_id, duration_ms, retVal ? "true" : "false");
+	SLEEPDLOG(LOG_INFO, "%s: (%s) for %dms => %s",
+	          __FUNCTION__, activity_id, duration_ms, retVal ? "true" : "false");
 
-    if (retVal)
-    {
-        /*
-            Force IdleCheck to run in case this activity is the same as
-            the current "long pole" activity but with a shorter life.
-        */
-        ScheduleIdleCheck(0, false);
-    }
+	if (retVal)
+	{
+		/*
+		    Force IdleCheck to run in case this activity is the same as
+		    the current "long pole" activity but with a shorter life.
+		*/
+		ScheduleIdleCheck(0, false);
+	}
 
-    return retVal;
+	return retVal;
 }
 
-/** 
+/**
 * @brief Stop an activity
 *
 * @param activity_id of the activity than needs to be stopped
-* 
-* @param  activity_id 
+*
+* @param  activity_id
 */
 void
 PwrEventActivityStop(const char *activity_id)
 {
-    SLEEPDLOG(LOG_INFO, "%s: (%s)", __FUNCTION__, activity_id);
-    _activity_stop(activity_id);
+	SLEEPDLOG(LOG_INFO, "%s: (%s)", __FUNCTION__, activity_id);
+	_activity_stop(activity_id);
 
-    ScheduleIdleCheck(0, false);
+	ScheduleIdleCheck(0, false);
 }
 
-/** 
+/**
 * @brief Remove all expired activities...
 *        This assumes the list is sorted.
-* 
-* @param  now 
+*
+* @param  now
 */
 void
 PwrEventActivityRemoveExpired(struct timespec *now)
 {
-    pthread_mutex_lock(&activity_mutex);
+	pthread_mutex_lock(&activity_mutex);
 
-    GList *iter;
-    for (iter = activity_roster->head; iter != NULL; )
-    {
-        Activity *a = (Activity*)iter->data;
+	GList *iter;
 
-        // remove expired
-        if (_activity_expired(a, now))
-        {
-            GList *current_iter = iter;
-            iter = iter->next;
+	for (iter = activity_roster->head; iter != NULL;)
+	{
+		Activity *a = (Activity *)iter->data;
 
-            if (a->duration_ms >= ACTIVITY_HIGH_DURATION_MS)
-            {
-                LSError lserror;
-                LSErrorInit(&lserror);
+		// remove expired
+		if (_activity_expired(a, now))
+		{
+			GList *current_iter = iter;
+			iter = iter->next;
 
-                SLEEPDLOG(LOG_WARNING,
-                    "%s Long activity %s of duration %d ms expired... sending RDX report.",
-                    __FUNCTION__,
-                    a->activity_id, a->duration_ms);
-            }
+			if (a->duration_ms >= ACTIVITY_HIGH_DURATION_MS)
+			{
+				LSError lserror;
+				LSErrorInit(&lserror);
 
-            _activity_stop_activity(a);
+				SLEEPDLOG(LOG_WARNING,
+				          "%s Long activity %s of duration %d ms expired... sending RDX report.",
+				          __FUNCTION__,
+				          a->activity_id, a->duration_ms);
+			}
 
-            g_queue_delete_link(activity_roster, current_iter);
-        }
-        else
-        {
-            break;
-        }
-    }
+			_activity_stop_activity(a);
 
-    pthread_mutex_unlock(&activity_mutex);
+			g_queue_delete_link(activity_roster, current_iter);
+		}
+		else
+		{
+			break;
+		}
+	}
+
+	pthread_mutex_unlock(&activity_mutex);
 }
 
 /*
@@ -589,22 +612,22 @@ PwrEventActivityRemoveExpired(struct timespec *now)
 int
 PwrEventActivityCount(struct timespec *from)
 {
-    return _activity_count(from);
+	return _activity_count(from);
 }
 
-/** 
+/**
 * @brief Prints the activities active in range from
 *        time 'start' to now.
-* 
-* @param  from 
+*
+* @param  from
 */
 void
 PwrEventActivityPrintFrom(struct timespec *start)
 {
-    struct timespec now;
-    ClockGetTime(&now);
+	struct timespec now;
+	ClockGetTime(&now);
 
-    _activity_print(start, &now);
+	_activity_print(start, &now);
 }
 
 /*
@@ -613,15 +636,15 @@ PwrEventActivityPrintFrom(struct timespec *start)
 void
 PwrEventActivityPrint(void)
 {
-    struct timespec now;
-    ClockGetTime(&now);
+	struct timespec now;
+	ClockGetTime(&now);
 
-    _activity_print(&now, &now);
+	_activity_print(&now, &now);
 }
 
-/** 
+/**
 * @brief Tells us if there are any activities that prevent suspend.
-* 
+*
 * @param now
 *
 * @retval
@@ -629,8 +652,8 @@ PwrEventActivityPrint(void)
 bool
 PwrEventActivityCanSleep(struct timespec *now)
 {
-    Activity *a = _activity_obtain_min(now);
-    return NULL == a;
+	Activity *a = _activity_obtain_min(now);
+	return NULL == a;
 }
 
 /**
@@ -644,12 +667,18 @@ PwrEventActivityCanSleep(struct timespec *now)
 long
 PwrEventActivityGetMaxDuration(struct timespec *now)
 {
-    Activity *a = _activity_obtain_max(now);
-    if (!a) return 0;
+	Activity *a = _activity_obtain_max(now);
 
-    struct timespec diff;
-    ClockDiff(&diff, &a->end_time, now);
-    return ClockGetMs(&diff);
+	if (!a)
+	{
+		return 0;
+	}
+
+	struct timespec diff;
+
+	ClockDiff(&diff, &a->end_time, now);
+
+	return ClockGetMs(&diff);
 }
 
 /*
@@ -661,16 +690,16 @@ PwrEventActivityGetMaxDuration(struct timespec *now)
 bool
 PwrEventFreezeActivities(struct timespec *now)
 {
-    pthread_mutex_lock(&activity_mutex);
+	pthread_mutex_lock(&activity_mutex);
 
-    if (_activity_obtain_min_unlocked(now) != NULL)
-    {
-        pthread_mutex_unlock(&activity_mutex);
-        return false;
-    }
+	if (_activity_obtain_min_unlocked(now) != NULL)
+	{
+		pthread_mutex_unlock(&activity_mutex);
+		return false;
+	}
 
-    gFrozen = true;
-    return true;
+	gFrozen = true;
+	return true;
 }
 
 /**
@@ -680,8 +709,8 @@ PwrEventFreezeActivities(struct timespec *now)
 void
 PwrEventThawActivities(void)
 {
-    gFrozen = false;
-    pthread_mutex_unlock(&activity_mutex);
+	gFrozen = false;
+	pthread_mutex_unlock(&activity_mutex);
 }
 
 INIT_FUNC(INIT_FUNC_EARLY, _activity_init);

@@ -37,7 +37,7 @@
 #define LOG_DOMAIN "PWREVENT-CLIENT: "
 
 /**
- * @defgroup SuspendClient	Suspend Clients
+ * @defgroup SuspendClient  Suspend Clients
  * @ingroup PowerEvents
  * @brief Clients registering for device suspend polling
  */
@@ -72,10 +72,11 @@ static int sNumNACK = 0;
 void
 PwrEventClientSuspendRequestNACKIncr(struct PwrEventClientInfo *info)
 {
-    if (info) {
-        info->num_NACK_suspendRequest++;
-        sNumNACK++;
-    }
+	if (info)
+	{
+		info->num_NACK_suspendRequest++;
+		sNumNACK++;
+	}
 }
 
 /**
@@ -87,10 +88,11 @@ PwrEventClientSuspendRequestNACKIncr(struct PwrEventClientInfo *info)
 void
 PwrEventClientPrepareSuspendNACKIncr(struct PwrEventClientInfo *info)
 {
-    if (info) {
-        info->num_NACK_prepareSuspend++;
-        sNumNACK++;
-    }
+	if (info)
+	{
+		info->num_NACK_prepareSuspend++;
+		sNumNACK++;
+	}
 }
 
 /**
@@ -99,23 +101,26 @@ PwrEventClientPrepareSuspendNACKIncr(struct PwrEventClientInfo *info)
  * @retval The new added client
  */
 
-static struct PwrEventClientInfo*
+static struct PwrEventClientInfo *
 PwrEventClientInfoCreate(void)
 {
-    struct PwrEventClientInfo *ret_client;
-    ret_client = malloc(sizeof(struct PwrEventClientInfo));
-    if (!ret_client)
-        return NULL;
-    
-    ret_client->clientName = NULL;
-    ret_client->clientId = NULL;
-    ret_client->requireSuspendRequest = false;
-    ret_client->requirePrepareSuspend = false;
+	struct PwrEventClientInfo *ret_client;
+	ret_client = malloc(sizeof(struct PwrEventClientInfo));
 
-    ret_client->num_NACK_suspendRequest = 0;
-    ret_client->num_NACK_prepareSuspend = 0;
+	if (!ret_client)
+	{
+		return NULL;
+	}
 
-    return ret_client;
+	ret_client->clientName = NULL;
+	ret_client->clientId = NULL;
+	ret_client->requireSuspendRequest = false;
+	ret_client->requirePrepareSuspend = false;
+
+	ret_client->num_NACK_suspendRequest = 0;
+	ret_client->num_NACK_prepareSuspend = 0;
+
+	return ret_client;
 }
 
 
@@ -128,13 +133,16 @@ PwrEventClientInfoCreate(void)
 static void
 PwrEventClientInfoDestroy(struct PwrEventClientInfo *client)
 {
-    if (!client) return;
+	if (!client)
+	{
+		return;
+	}
 
-    g_free(client->clientName);
-    g_free(client->clientId);
-    g_free(client->applicationName);
+	g_free(client->clientName);
+	g_free(client->clientId);
+	g_free(client->applicationName);
 
-    free(client);
+	free(client);
 }
 
 /**
@@ -146,15 +154,21 @@ PwrEventClientInfoDestroy(struct PwrEventClientInfo *client)
 bool
 PwrEventClientRegister(ClientUID uid)
 {
-    if (PwrEventClientLookup(uid))
-        PwrEventClientUnregister(uid);
+	if (PwrEventClientLookup(uid))
+	{
+		PwrEventClientUnregister(uid);
+	}
 
-    struct PwrEventClientInfo* clientInfo = PwrEventClientInfoCreate();
-    if (!clientInfo) return false;
+	struct PwrEventClientInfo *clientInfo = PwrEventClientInfoCreate();
 
-    TRACE("\t%s Registering client %s\n", __FUNCTION__, uid);
-    g_hash_table_replace(sClientList, g_strdup(uid), clientInfo);
-    return true;
+	if (!clientInfo)
+	{
+		return false;
+	}
+
+	TRACE("\t%s Registering client %s\n", __FUNCTION__, uid);
+	g_hash_table_replace(sClientList, g_strdup(uid), clientInfo);
+	return true;
 }
 
 /**
@@ -166,21 +180,21 @@ PwrEventClientRegister(ClientUID uid)
 bool
 PwrEventClientUnregister(ClientUID uid)
 {
-    g_hash_table_remove(sClientList, uid);
+	g_hash_table_remove(sClientList, uid);
 
-    return true;
+	return true;
 }
 
 /**
  * @brief Function to free the memory allocated for the value used when removing the entry from the
  * GHashTable "sClientList".
  */
-static void 
+static void
 ClientTableValueDestroy(gpointer value)
 {
-    struct PwrEventClientInfo *info = (struct PwrEventClientInfo*)value;
+	struct PwrEventClientInfo *info = (struct PwrEventClientInfo *)value;
 
-    PwrEventClientInfoDestroy(info);
+	PwrEventClientInfoDestroy(info);
 }
 
 /**
@@ -189,7 +203,7 @@ ClientTableValueDestroy(gpointer value)
 GHashTable *
 PwrEventClientGetTable(void)
 {
-    return sClientList;
+	return sClientList;
 }
 
 /**
@@ -198,8 +212,8 @@ PwrEventClientGetTable(void)
 void
 PwrEventClientTableCreate(void)
 {
-    sClientList = g_hash_table_new_full(g_str_hash, g_str_equal,
-        g_free, ClientTableValueDestroy);
+	sClientList = g_hash_table_new_full(g_str_hash, g_str_equal,
+	                                    g_free, ClientTableValueDestroy);
 }
 
 /**
@@ -209,8 +223,8 @@ PwrEventClientTableCreate(void)
 void
 PwrEventClientTableDestroy(void)
 {
-    g_hash_table_remove_all(sClientList);
-    g_hash_table_destroy(sClientList);
+	g_hash_table_remove_all(sClientList);
+	g_hash_table_destroy(sClientList);
 }
 
 /**
@@ -221,21 +235,27 @@ PwrEventClientTableDestroy(void)
  * @retval PwrEventClientInfo
  */
 
-struct PwrEventClientInfo*
+struct PwrEventClientInfo *
 PwrEventClientLookup(ClientUID uid)
 {
-    if (NULL == uid)
-        return NULL;
+	if (NULL == uid)
+	{
+		return NULL;
+	}
 
-    struct PwrEventClientInfo *clientInfo;
-    clientInfo = (struct PwrEventClientInfo*)
-        g_hash_table_lookup(sClientList, uid);
-    if (!clientInfo)
-        goto error;
-    
-    return clientInfo;
+	struct PwrEventClientInfo *clientInfo;
+
+	clientInfo = (struct PwrEventClientInfo *)
+	             g_hash_table_lookup(sClientList, uid);
+
+	if (!clientInfo)
+	{
+		goto error;
+	}
+
+	return clientInfo;
 error:
-    return NULL;
+	return NULL;
 }
 
 /**
@@ -246,26 +266,33 @@ error:
  * @retval TRUE if client with the given name found and unregistered
  */
 
-bool PwrEventClientUnregisterByName(char * clientName)
+bool PwrEventClientUnregisterByName(char *clientName)
 {
-    if (NULL == clientName)
-        return NULL;
-
-    struct PwrEventClientInfo *clientInfo=NULL;
-    GHashTableIter iter;
-    gpointer key, value;
-
-    g_hash_table_iter_init (&iter, sClientList);
-    while (g_hash_table_iter_next (&iter, &key, &value))
+	if (NULL == clientName)
 	{
-    	clientInfo=value;
-    	if(!strcmp(clientInfo->clientName,clientName))
-    	{
-    		PwrEventClientUnregister(clientInfo->clientId);
-    		return true;
-    	}
+		return NULL;
 	}
-    return false;
+
+	struct PwrEventClientInfo *clientInfo = NULL;
+
+	GHashTableIter iter;
+
+	gpointer key, value;
+
+	g_hash_table_iter_init(&iter, sClientList);
+
+	while (g_hash_table_iter_next(&iter, &key, &value))
+	{
+		clientInfo = value;
+
+		if (!strcmp(clientInfo->clientName, clientName))
+		{
+			PwrEventClientUnregister(clientInfo->clientId);
+			return true;
+		}
+	}
+
+	return false;
 }
 
 /**
@@ -274,24 +301,27 @@ bool PwrEventClientUnregisterByName(char * clientName)
 static const char *
 AckToString(int ack)
 {
-    const char *ret;
+	const char *ret;
 
-    switch (ack)
-    {
-    case PWREVENT_CLIENT_ACK:
-        ret = "ACK";
-        break;
-    case PWREVENT_CLIENT_NACK:
-        ret = "NACK";
-        break;
-    case PWREVENT_CLIENT_NORSP:
-        ret = "NORSP";
-        break;
-    default:
-        ret = "Unknown";
-    }
+	switch (ack)
+	{
+		case PWREVENT_CLIENT_ACK:
+			ret = "ACK";
+			break;
 
-    return ret;
+		case PWREVENT_CLIENT_NACK:
+			ret = "NACK";
+			break;
+
+		case PWREVENT_CLIENT_NORSP:
+			ret = "NORSP";
+			break;
+
+		default:
+			ret = "Unknown";
+	}
+
+	return ret;
 }
 
 /**
@@ -300,22 +330,22 @@ AckToString(int ack)
 static void
 get_client_table_str_helper(gpointer key, gpointer value, gpointer data)
 {
-    GString * str = (GString *) data;
-    g_return_if_fail(str != NULL);
-    
-    struct PwrEventClientInfo* info =
-        (struct PwrEventClientInfo*)value;
-    g_return_if_fail(info != NULL);
+	GString *str = (GString *) data;
+	g_return_if_fail(str != NULL);
 
-    g_string_append_printf(str, "    %s/%s - %s (%s) - NACKS: %d/%d\n",
-            info->requireSuspendRequest ?
-            AckToString(info->ackSuspendRequest) : "###",
-            info->requirePrepareSuspend ? 
-            AckToString(info->ackPrepareSuspend) : "###",
-            info->clientName,
-            info->clientId,
-            info->num_NACK_suspendRequest,
-            info->num_NACK_prepareSuspend);
+	struct PwrEventClientInfo *info =
+	    (struct PwrEventClientInfo *)value;
+	g_return_if_fail(info != NULL);
+
+	g_string_append_printf(str, "    %s/%s - %s (%s) - NACKS: %d/%d\n",
+	                       info->requireSuspendRequest ?
+	                       AckToString(info->ackSuspendRequest) : "###",
+	                       info->requirePrepareSuspend ?
+	                       AckToString(info->ackPrepareSuspend) : "###",
+	                       info->clientName,
+	                       info->clientId,
+	                       info->num_NACK_suspendRequest,
+	                       info->num_NACK_prepareSuspend);
 }
 
 
@@ -326,9 +356,9 @@ get_client_table_str_helper(gpointer key, gpointer value, gpointer data)
 gchar *
 PwrEventGetClientTable()
 {
-    GString * ret = g_string_sized_new(32);
-    g_hash_table_foreach(sClientList, get_client_table_str_helper, ret);
-    return g_string_free(ret, false);
+	GString *ret = g_string_sized_new(32);
+	g_hash_table_foreach(sClientList, get_client_table_str_helper, ret);
+	return g_string_free(ret, false);
 }
 
 /**
@@ -336,21 +366,24 @@ PwrEventGetClientTable()
  * to the string pointer passed.
  */
 static void
-get_SuspendRequest_NORSP_list_helper(gpointer key, gpointer value, gpointer data)
+get_SuspendRequest_NORSP_list_helper(gpointer key, gpointer value,
+                                     gpointer data)
 {
-    GString * str = (GString *) data;
-    g_return_if_fail(str != NULL);
-    
-    struct PwrEventClientInfo* info =
-        (struct PwrEventClientInfo*)value;
-    g_return_if_fail(info != NULL);
+	GString *str = (GString *) data;
+	g_return_if_fail(str != NULL);
 
-    if ((info->requireSuspendRequest) && (info->ackSuspendRequest == PWREVENT_CLIENT_NORSP)) {
-        g_string_append_printf(str, "%s%s(%s)", 
-                str->len > 0 ? ", " : "",
-                info->clientName,
-                info->clientId);
-    }
+	struct PwrEventClientInfo *info =
+	    (struct PwrEventClientInfo *)value;
+	g_return_if_fail(info != NULL);
+
+	if ((info->requireSuspendRequest) &&
+	        (info->ackSuspendRequest == PWREVENT_CLIENT_NORSP))
+	{
+		g_string_append_printf(str, "%s%s(%s)",
+		                       str->len > 0 ? ", " : "",
+		                       info->clientName,
+		                       info->clientId);
+	}
 }
 
 /**
@@ -361,9 +394,9 @@ get_SuspendRequest_NORSP_list_helper(gpointer key, gpointer value, gpointer data
 gchar *
 PwrEventGetSuspendRequestNORSPList()
 {
-    GString * ret = g_string_sized_new(32);
-    g_hash_table_foreach(sClientList, get_SuspendRequest_NORSP_list_helper, ret);
-    return g_string_free(ret, false);
+	GString *ret = g_string_sized_new(32);
+	g_hash_table_foreach(sClientList, get_SuspendRequest_NORSP_list_helper, ret);
+	return g_string_free(ret, false);
 }
 
 /**
@@ -371,21 +404,24 @@ PwrEventGetSuspendRequestNORSPList()
  */
 
 static void
-get_PrepareSuspend_NORSP_list_helper(gpointer key, gpointer value, gpointer data)
+get_PrepareSuspend_NORSP_list_helper(gpointer key, gpointer value,
+                                     gpointer data)
 {
-    GString * str = (GString *) data;
-    g_return_if_fail(str != NULL);
-    
-    struct PwrEventClientInfo* info =
-        (struct PwrEventClientInfo*)value;
-    g_return_if_fail(info != NULL);
+	GString *str = (GString *) data;
+	g_return_if_fail(str != NULL);
 
-    if ((info->requirePrepareSuspend) && (info->ackPrepareSuspend == PWREVENT_CLIENT_NORSP)) {
-        g_string_append_printf(str, "%s%s(%s)", 
-                str->len > 0 ? ", " : "",
-                info->clientName,
-                info->clientId);
-    }
+	struct PwrEventClientInfo *info =
+	    (struct PwrEventClientInfo *)value;
+	g_return_if_fail(info != NULL);
+
+	if ((info->requirePrepareSuspend) &&
+	        (info->ackPrepareSuspend == PWREVENT_CLIENT_NORSP))
+	{
+		g_string_append_printf(str, "%s%s(%s)",
+		                       str->len > 0 ? ", " : "",
+		                       info->clientName,
+		                       info->clientId);
+	}
 }
 
 /**
@@ -395,9 +431,9 @@ get_PrepareSuspend_NORSP_list_helper(gpointer key, gpointer value, gpointer data
 gchar *
 PwrEventGetPrepareSuspendNORSPList()
 {
-    GString * ret = g_string_sized_new(32);
-    g_hash_table_foreach(sClientList, get_PrepareSuspend_NORSP_list_helper, ret);
-    return g_string_free(ret, false);
+	GString *ret = g_string_sized_new(32);
+	g_hash_table_foreach(sClientList, get_PrepareSuspend_NORSP_list_helper, ret);
+	return g_string_free(ret, false);
 }
 
 
@@ -407,20 +443,24 @@ PwrEventGetPrepareSuspendNORSPList()
 void
 PwrEventClientTablePrintHelper(gpointer key, gpointer value, gpointer data)
 {
-    GLogLevelFlags lvl = GPOINTER_TO_UINT(data);
-    struct PwrEventClientInfo* info =
-        (struct PwrEventClientInfo*)value;
-    if (!info) return;
+	GLogLevelFlags lvl = GPOINTER_TO_UINT(data);
+	struct PwrEventClientInfo *info =
+	    (struct PwrEventClientInfo *)value;
 
-    g_log(G_LOG_DOMAIN, lvl, "    %s/%s - %s (%s) - NACKS: %d/%d\n",
-            info->requireSuspendRequest ?
-                AckToString(info->ackSuspendRequest) : "###",
-            info->requirePrepareSuspend ? 
-                AckToString(info->ackPrepareSuspend) : "###",
-            info->clientName,
-            info->clientId,
-            info->num_NACK_suspendRequest,
-            info->num_NACK_prepareSuspend);
+	if (!info)
+	{
+		return;
+	}
+
+	g_log(G_LOG_DOMAIN, lvl, "    %s/%s - %s (%s) - NACKS: %d/%d\n",
+	      info->requireSuspendRequest ?
+	      AckToString(info->ackSuspendRequest) : "###",
+	      info->requirePrepareSuspend ?
+	      AckToString(info->ackPrepareSuspend) : "###",
+	      info->clientName,
+	      info->clientId,
+	      info->num_NACK_suspendRequest,
+	      info->num_NACK_prepareSuspend);
 }
 
 /**
@@ -429,8 +469,9 @@ PwrEventClientTablePrintHelper(gpointer key, gpointer value, gpointer data)
 void
 PwrEventClientTablePrint(GLogLevelFlags lvl)
 {
-    g_log(G_LOG_DOMAIN, lvl, "PwrEvent clients:");
-    g_hash_table_foreach(sClientList, PwrEventClientTablePrintHelper, GUINT_TO_POINTER(lvl));
+	g_log(G_LOG_DOMAIN, lvl, "PwrEvent clients:");
+	g_hash_table_foreach(sClientList, PwrEventClientTablePrintHelper,
+	                     GUINT_TO_POINTER(lvl));
 }
 
 
@@ -440,16 +481,21 @@ PwrEventClientTablePrint(GLogLevelFlags lvl)
 void
 _PwrEventClientPrintNACKHelper(gpointer key, gpointer value, gpointer ctx)
 {
-    struct PwrEventClientInfo* info =
-        (struct PwrEventClientInfo*)value;
-    if (!info) return;
+	struct PwrEventClientInfo *info =
+	    (struct PwrEventClientInfo *)value;
 
-    int num_nacks = info->num_NACK_suspendRequest + info->num_NACK_prepareSuspend;
-    if (num_nacks > 0)
-    {
-        SLEEPDLOG(LOG_CRIT, "    %s (%s) NACKs: %d",
-                info->clientName, info->clientId, num_nacks);
-    }
+	if (!info)
+	{
+		return;
+	}
+
+	int num_nacks = info->num_NACK_suspendRequest + info->num_NACK_prepareSuspend;
+
+	if (num_nacks > 0)
+	{
+		SLEEPDLOG(LOG_CRIT, "    %s (%s) NACKs: %d",
+		          info->clientName, info->clientId, num_nacks);
+	}
 }
 
 /**
@@ -459,12 +505,13 @@ _PwrEventClientPrintNACKHelper(gpointer key, gpointer value, gpointer ctx)
 void
 PwrEventClientPrintNACKRateLimited(void)
 {
-    static int num_NACK = 0;
+	static int num_NACK = 0;
 
-    if (sNumNACK > num_NACK) {
-        num_NACK = sNumNACK;
-        g_hash_table_foreach(sClientList, _PwrEventClientPrintNACKHelper, NULL);
-    }
+	if (sNumNACK > num_NACK)
+	{
+		num_NACK = sNumNACK;
+		g_hash_table_foreach(sClientList, _PwrEventClientPrintNACKHelper, NULL);
+	}
 }
 
 /**
@@ -477,20 +524,22 @@ PwrEventClientPrintNACKRateLimited(void)
 void
 PwrEventClientSuspendRequestRegister(ClientUID uid, bool reg)
 {
-    struct PwrEventClientInfo *info = PwrEventClientLookup(uid);
-    if (!info)
-    {
-        TRACE("\t%s could not find uid %s\n", __FUNCTION__, uid);
-        return;
-    }
-    if (info->requireSuspendRequest != reg)
-    {
-        info->requireSuspendRequest = reg;
-        sNumSuspendRequest += reg ? 1 : -1;
-    }
+	struct PwrEventClientInfo *info = PwrEventClientLookup(uid);
 
-    SLEEPDLOG(LOG_NOTICE, "%s %sregistering for suspend_request",
-        info->clientName, reg ? "" : "de-");
+	if (!info)
+	{
+		TRACE("\t%s could not find uid %s\n", __FUNCTION__, uid);
+		return;
+	}
+
+	if (info->requireSuspendRequest != reg)
+	{
+		info->requireSuspendRequest = reg;
+		sNumSuspendRequest += reg ? 1 : -1;
+	}
+
+	SLEEPDLOG(LOG_NOTICE, "%s %sregistering for suspend_request",
+	          info->clientName, reg ? "" : "de-");
 }
 
 /**
@@ -504,20 +553,22 @@ PwrEventClientSuspendRequestRegister(ClientUID uid, bool reg)
 void
 PwrEventClientPrepareSuspendRegister(ClientUID uid, bool reg)
 {
-    struct PwrEventClientInfo *info = PwrEventClientLookup(uid);
-    if (!info)
-    {
-        TRACE("\t%s could not find uid %s\n", __FUNCTION__, uid);
-        return;
-    }
-    if (info->requirePrepareSuspend != reg)
-    {
-        info->requirePrepareSuspend = reg;
-        sNumPrepareSuspend += reg ? 1 : -1;
-    }
+	struct PwrEventClientInfo *info = PwrEventClientLookup(uid);
 
-    SLEEPDLOG(LOG_NOTICE, "%s %sregistering for prepare_suspend",
-        info->clientName, reg ? "" : "de-");
+	if (!info)
+	{
+		TRACE("\t%s could not find uid %s\n", __FUNCTION__, uid);
+		return;
+	}
+
+	if (info->requirePrepareSuspend != reg)
+	{
+		info->requirePrepareSuspend = reg;
+		sNumPrepareSuspend += reg ? 1 : -1;
+	}
+
+	SLEEPDLOG(LOG_NOTICE, "%s %sregistering for prepare_suspend",
+	          info->clientName, reg ? "" : "de-");
 }
 
 
@@ -530,14 +581,25 @@ PwrEventClientPrepareSuspendRegister(ClientUID uid, bool reg)
 void
 PwrEventVoteInitHelper(gpointer key, gpointer value, gpointer ctx)
 {
-    struct PwrEventClientInfo* info = (struct PwrEventClientInfo*)value;
-    if (!info) return;
+	struct PwrEventClientInfo *info = (struct PwrEventClientInfo *)value;
 
-    info->ackSuspendRequest = PWREVENT_CLIENT_NORSP;
-    info->ackPrepareSuspend = PWREVENT_CLIENT_NORSP;
+	if (!info)
+	{
+		return;
+	}
 
-    if (info->requireSuspendRequest) sNumSuspendRequest++;
-    if (info->requirePrepareSuspend) sNumPrepareSuspend++;
+	info->ackSuspendRequest = PWREVENT_CLIENT_NORSP;
+	info->ackPrepareSuspend = PWREVENT_CLIENT_NORSP;
+
+	if (info->requireSuspendRequest)
+	{
+		sNumSuspendRequest++;
+	}
+
+	if (info->requirePrepareSuspend)
+	{
+		sNumPrepareSuspend++;
+	}
 }
 
 /**
@@ -546,13 +608,13 @@ PwrEventVoteInitHelper(gpointer key, gpointer value, gpointer ctx)
 void
 PwrEventVoteInit(void)
 {
-    sNumSuspendRequestAck = 0;
-    sNumSuspendRequest    = 0;
+	sNumSuspendRequestAck = 0;
+	sNumSuspendRequest    = 0;
 
-    sNumPrepareSuspendAck = 0;
-    sNumPrepareSuspend    = 0;
+	sNumPrepareSuspendAck = 0;
+	sNumPrepareSuspend    = 0;
 
-    g_hash_table_foreach(sClientList, PwrEventVoteInitHelper, NULL);
+	g_hash_table_foreach(sClientList, PwrEventVoteInitHelper, NULL);
 }
 
 /**
@@ -566,26 +628,29 @@ PwrEventVoteInit(void)
 bool
 PwrEventVoteSuspendRequest(ClientUID uid, bool ack)
 {
-    struct PwrEventClientInfo *info = PwrEventClientLookup(uid);
-    if (!info)
-    {
-        TRACE("\t%s could not find uid %s\n", __FUNCTION__, uid);
-        return false;
-    }
+	struct PwrEventClientInfo *info = PwrEventClientLookup(uid);
 
-    if (!ack)
-        g_warning("%s(%s) SuspendRequestNACK.", info->clientName, info->clientId);
+	if (!info)
+	{
+		TRACE("\t%s could not find uid %s\n", __FUNCTION__, uid);
+		return false;
+	}
 
-    TRACE("%s %sACK suspend response.\n",
-        info->clientName, ack ? "" : "N");
+	if (!ack)
+	{
+		g_warning("%s(%s) SuspendRequestNACK.", info->clientName, info->clientId);
+	}
 
-    if (info->ackSuspendRequest != ack)
-    {
-        info->ackSuspendRequest = ack;
-        sNumSuspendRequestAck += ack ? 1 : 0;
-    }
+	TRACE("%s %sACK suspend response.\n",
+	      info->clientName, ack ? "" : "N");
 
-    return (!ack || PwrEventClientsApproveSuspendRequest());
+	if (info->ackSuspendRequest != ack)
+	{
+		info->ackSuspendRequest = ack;
+		sNumSuspendRequestAck += ack ? 1 : 0;
+	}
+
+	return (!ack || PwrEventClientsApproveSuspendRequest());
 }
 
 
@@ -600,26 +665,29 @@ PwrEventVoteSuspendRequest(ClientUID uid, bool ack)
 bool
 PwrEventVotePrepareSuspend(ClientUID uid, bool ack)
 {
-    struct PwrEventClientInfo *info = PwrEventClientLookup(uid);
-    if (!info)
-    {
-        TRACE("\t%s could not find uid %s\n", __FUNCTION__, uid);
-        return false;
-    }
+	struct PwrEventClientInfo *info = PwrEventClientLookup(uid);
 
-    if (!ack)
-        g_warning("%s(%s) PrepareSuspendNACK", info->clientName, info->clientId);
+	if (!info)
+	{
+		TRACE("\t%s could not find uid %s\n", __FUNCTION__, uid);
+		return false;
+	}
 
-    TRACE("%s %sACK prepare suspend.\n",
-        info->clientName, ack ? "" : "N");
+	if (!ack)
+	{
+		g_warning("%s(%s) PrepareSuspendNACK", info->clientName, info->clientId);
+	}
 
-    if (info->ackPrepareSuspend != ack)
-    {
-        info->ackPrepareSuspend = ack;
-        sNumPrepareSuspendAck += ack ? 1 : 0;
-    }
+	TRACE("%s %sACK prepare suspend.\n",
+	      info->clientName, ack ? "" : "N");
 
-    return (!ack || PwrEventClientsApprovePrepareSuspend());
+	if (info->ackPrepareSuspend != ack)
+	{
+		info->ackPrepareSuspend = ack;
+		sNumPrepareSuspendAck += ack ? 1 : 0;
+	}
+
+	return (!ack || PwrEventClientsApprovePrepareSuspend());
 }
 
 /**
@@ -629,7 +697,7 @@ PwrEventVotePrepareSuspend(ClientUID uid, bool ack)
 bool
 PwrEventClientsApproveSuspendRequest(void)
 {
-    return sNumSuspendRequestAck >= sNumSuspendRequest;
+	return sNumSuspendRequestAck >= sNumSuspendRequest;
 }
 
 /**
@@ -639,7 +707,7 @@ PwrEventClientsApproveSuspendRequest(void)
 bool
 PwrEventClientsApprovePrepareSuspend(void)
 {
-    return sNumPrepareSuspendAck >= sNumPrepareSuspend;
+	return sNumPrepareSuspendAck >= sNumPrepareSuspend;
 }
 
 /* @} END OF SuspendClient */

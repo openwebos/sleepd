@@ -44,128 +44,167 @@
 static bool
 _check_integrity(sqlite3 *db)
 {
-    const char *cmd = "PRAGMA integrity_check;";
-    int rc;
+	const char *cmd = "PRAGMA integrity_check;";
+	int rc;
 
-    sqlite3_stmt *stmt;
-    const char* tail;
-    rc=sqlite3_prepare_v2( db, cmd,-1,&stmt,&tail);
-    if (!stmt) goto fail;
+	sqlite3_stmt *stmt;
+	const char *tail;
+	rc = sqlite3_prepare_v2(db, cmd, -1, &stmt, &tail);
 
-    rc = sqlite3_step(stmt);
-    if (rc == SQLITE_OK)
-        goto success;
+	if (!stmt)
+	{
+		goto fail;
+	}
 
-    if (rc != SQLITE_ROW) goto fail;
+	rc = sqlite3_step(stmt);
 
-    int columns = sqlite3_data_count(stmt);
-    if (columns != 1) goto fail;
-        
-    const char *column_text = (const char*)sqlite3_column_text(stmt, 0);
-    // A successful, no-error integrity check will be "ok" - all other strings imply failure
-    if (strcmp(column_text,"ok") == 0)
-        goto success;
+	if (rc == SQLITE_OK)
+	{
+		goto success;
+	}
 
-    goto fail;
+	if (rc != SQLITE_ROW)
+	{
+		goto fail;
+	}
+
+	int columns = sqlite3_data_count(stmt);
+
+	if (columns != 1)
+	{
+		goto fail;
+	}
+
+	const char *column_text = (const char *)sqlite3_column_text(stmt, 0);
+
+	// A successful, no-error integrity check will be "ok" - all other strings imply failure
+	if (strcmp(column_text, "ok") == 0)
+	{
+		goto success;
+	}
+
+	goto fail;
 
 success:
-    sqlite3_finalize(stmt);
-    return true;
+	sqlite3_finalize(stmt);
+	return true;
 fail:
-    sqlite3_finalize(stmt);
-    fprintf(stderr, "integrity check failed");
-    return false;
+	sqlite3_finalize(stmt);
+	fprintf(stderr, "integrity check failed");
+	return false;
 }
 
 bool
 smart_sql_exec(sqlite3 *db, const char *cmd)
 {
-    int rc;
-    sqlite3_stmt *stmt;
-    const char *tail;
+	int rc;
+	sqlite3_stmt *stmt;
+	const char *tail;
 
-    rc = sqlite3_prepare_v2( db, cmd, -1, &stmt, &tail);
-    if (!stmt) {
-        g_warning("%s: sqlite3_prepare error %d for cmd \"%s\"", __FUNCTION__, rc, cmd);
-        return false;
-    }
-    rc = sqlite3_step(stmt);
-    if (rc != SQLITE_DONE) {
-        g_warning("%s: sqlite3_step error %d for cmd \"%s\"", __FUNCTION__, rc, cmd);
-        sqlite3_finalize(stmt);
-        return false;
-    }
-    sqlite3_finalize(stmt);
-    return true;
+	rc = sqlite3_prepare_v2(db, cmd, -1, &stmt, &tail);
+
+	if (!stmt)
+	{
+		g_warning("%s: sqlite3_prepare error %d for cmd \"%s\"", __FUNCTION__, rc, cmd);
+		return false;
+	}
+
+	rc = sqlite3_step(stmt);
+
+	if (rc != SQLITE_DONE)
+	{
+		g_warning("%s: sqlite3_step error %d for cmd \"%s\"", __FUNCTION__, rc, cmd);
+		sqlite3_finalize(stmt);
+		return false;
+	}
+
+	sqlite3_finalize(stmt);
+	return true;
 }
 
 
 static sqlite3 *
 _open(const char *path)
 {
-    sqlite3 *db;
-    int rc;
-    bool retVal;
+	sqlite3 *db;
+	int rc;
+	bool retVal;
 
-    rc = sqlite3_open(path, &db);
-    if (rc != SQLITE_OK) {
-        return NULL;
-    }
+	rc = sqlite3_open(path, &db);
 
-    retVal = smart_sql_exec(db, "PRAGMA temp_store = MEMORY;");
-    if (!retVal) {
-        return NULL;
-    }
+	if (rc != SQLITE_OK)
+	{
+		return NULL;
+	}
 
-    // TODO might want to enable sqlite3_palm_extension.so for
-    // perf reasons.
+	retVal = smart_sql_exec(db, "PRAGMA temp_store = MEMORY;");
 
-    // SyncOff
-    retVal = smart_sql_exec(db, "PRAGMA synchronous = 0");
-    if (!retVal) {
-        fprintf(stderr, "Could not set syncoff on %s\n", path);
-    }
+	if (!retVal)
+	{
+		return NULL;
+	}
 
-    return db;
+	// TODO might want to enable sqlite3_palm_extension.so for
+	// perf reasons.
+
+	// SyncOff
+	retVal = smart_sql_exec(db, "PRAGMA synchronous = 0");
+
+	if (!retVal)
+	{
+		fprintf(stderr, "Could not set syncoff on %s\n", path);
+	}
+
+	return db;
 }
 
 static void
 _close(sqlite3 *db)
 {
-    sqlite3_close(db);
+	sqlite3_close(db);
 }
 
 bool
 smart_sql_open(const char *path, sqlite3 **ret_db)
 {
-    bool retVal;
+	bool retVal;
 
-    sqlite3 *db  =_open(path);
-    if (!db) return false;
+	sqlite3 *db  = _open(path);
 
-    retVal = _check_integrity(db);
-    if (!retVal) {
-        SLEEPDLOG(LOG_ERR, "%s: %s corrupted... clearing.", __FUNCTION__, path);
+	if (!db)
+	{
+		return false;
+	}
 
-        _close(db);
+	retVal = _check_integrity(db);
 
-        char *journal = g_strdup_printf("%s-journal", path);
-        remove(journal);
-        remove(path);
-        g_free(journal);
+	if (!retVal)
+	{
+		SLEEPDLOG(LOG_ERR, "%s: %s corrupted... clearing.", __FUNCTION__, path);
 
-        db = _open(path);
-        if (!db) return false;
-    }
+		_close(db);
 
-    *ret_db = db;
-    return true;
+		char *journal = g_strdup_printf("%s-journal", path);
+		remove(journal);
+		remove(path);
+		g_free(journal);
+
+		db = _open(path);
+
+		if (!db)
+		{
+			return false;
+		}
+	}
+
+	*ret_db = db;
+	return true;
 }
 
 void
 smart_sql_close(sqlite3 *db)
 {
-    _close(db);
+	_close(db);
 }
 
 /* @} END OF NewInterface */

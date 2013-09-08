@@ -26,28 +26,29 @@
  * Sleep configuration.
  */
 
-typedef struct {
-    int wait_idle_ms;
-    int wait_idle_granularity_ms;
+typedef struct
+{
+	int wait_idle_ms;
+	int wait_idle_granularity_ms;
 
-    int wait_suspend_response_ms;
-    int wait_prepare_suspend_ms;
-    int after_resume_idle_ms;
-    int wait_alarms_s;
+	int wait_suspend_response_ms;
+	int wait_prepare_suspend_ms;
+	int after_resume_idle_ms;
+	int wait_alarms_s;
 
-    bool suspend_with_charger;
-    bool visual_leds_suspend;
+	bool suspend_with_charger;
+	bool visual_leds_suspend;
 
-    int debug;
-    bool use_syslog;
+	int debug;
+	bool use_syslog;
 
-    bool disable_rtc_alarms;
+	bool disable_rtc_alarms;
 
-    const char *preference_dir;
+	const char *preference_dir;
 
-    /* These aren't really config, they are runtime parameters */
-    int is_running;
-    bool fasthalt;
+	/* These aren't really config, they are runtime parameters */
+	int is_running;
+	bool fasthalt;
 } SleepConfiguration;
 
 extern SleepConfiguration gSleepConfig;

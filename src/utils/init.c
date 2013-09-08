@@ -27,8 +27,8 @@
 
 typedef struct _GNamedHookList
 {
-    GHookList   hookList;
-    const char *name;
+	GHookList   hookList;
+	const char *name;
 } GNamedHookList;
 
 /* hash from string -> GNamedHookList */
@@ -37,19 +37,20 @@ static GHashTable *namedInitFuncs = NULL;
 static void
 HookInit(gpointer func)
 {
-    InitFunc f = func;
-    int ret = f();
-    if (ret < 0)
-    {
-        g_error("%s: Could not initialize %p\n", __FUNCTION__, func);
-    }
+	InitFunc f = func;
+	int ret = f();
+
+	if (ret < 0)
+	{
+		g_error("%s: Could not initialize %p\n", __FUNCTION__, func);
+	}
 }
 
-typedef struct 
+typedef struct
 {
-    GHook            base;
-    const char      *func_name;
-    InitFuncPriority priority;
+	GHook            base;
+	const char      *func_name;
+	InitFuncPriority priority;
 } GPrioritizedHook;
 
 /**
@@ -59,70 +60,75 @@ typedef struct
 static gint
 GPrioritizedHookCompare(GHook *new_hook, GHook *sibling)
 {
-    GPrioritizedHook *new_hook_pr = (GPrioritizedHook*)new_hook;
-    GPrioritizedHook *sibling_pr = (GPrioritizedHook*)sibling;
+	GPrioritizedHook *new_hook_pr = (GPrioritizedHook *)new_hook;
+	GPrioritizedHook *sibling_pr = (GPrioritizedHook *)sibling;
 
-    return (new_hook_pr->priority > sibling_pr->priority);
+	return (new_hook_pr->priority > sibling_pr->priority);
 }
 
 /**
  * Add an InitFunc to the hooklist with the name 'name'
  */
 void
-NamedInitFuncAdd(const char *name, InitFuncPriority priority, InitFunc func, const char *func_name)
+NamedInitFuncAdd(const char *name, InitFuncPriority priority, InitFunc func,
+                 const char *func_name)
 {
-    if (!namedInitFuncs)
-    {
-        namedInitFuncs = g_hash_table_new(g_str_hash, g_str_equal);
-        if (!namedInitFuncs)
-        {
-            g_error("%s: Out of memory on initialization.\n", __FUNCTION__);
-            abort();
-        }
-    }
+	if (!namedInitFuncs)
+	{
+		namedInitFuncs = g_hash_table_new(g_str_hash, g_str_equal);
 
-    if (g_hash_table_lookup(namedInitFuncs, (gconstpointer)name) == NULL)
-    {
-        GNamedHookList *namedHookList = malloc(sizeof (GNamedHookList));
-        if (!namedHookList)
-        {
-            g_error("%s: Out of memory on initialization.\n", __FUNCTION__);
-            abort();
-        }
-        g_hook_list_init((GHookList*)namedHookList, sizeof(GPrioritizedHook));
+		if (!namedInitFuncs)
+		{
+			g_error("%s: Out of memory on initialization.\n", __FUNCTION__);
+			abort();
+		}
+	}
 
-        namedHookList->name = name;
-       
-        g_hash_table_insert(namedInitFuncs, (char*)name, namedHookList);
-    }
+	if (g_hash_table_lookup(namedInitFuncs, (gconstpointer)name) == NULL)
+	{
+		GNamedHookList *namedHookList = malloc(sizeof(GNamedHookList));
 
-    GHookList *hookList = (GHookList*)g_hash_table_lookup(namedInitFuncs, (gconstpointer)name);
+		if (!namedHookList)
+		{
+			g_error("%s: Out of memory on initialization.\n", __FUNCTION__);
+			abort();
+		}
 
-    GPrioritizedHook *hook = (GPrioritizedHook*)g_hook_alloc(hookList);
+		g_hook_list_init((GHookList *)namedHookList, sizeof(GPrioritizedHook));
 
-    hook->base.data = func;
-    hook->base.func = HookInit;
-    hook->priority  = priority;
-    hook->func_name = func_name;
+		namedHookList->name = name;
 
-    g_hook_insert_sorted(hookList, (GHook*)hook, GPrioritizedHookCompare);
+		g_hash_table_insert(namedInitFuncs, (char *)name, namedHookList);
+	}
+
+	GHookList *hookList = (GHookList *)g_hash_table_lookup(namedInitFuncs,
+	                      (gconstpointer)name);
+
+	GPrioritizedHook *hook = (GPrioritizedHook *)g_hook_alloc(hookList);
+
+	hook->base.data = func;
+	hook->base.func = HookInit;
+	hook->priority  = priority;
+	hook->func_name = func_name;
+
+	g_hook_insert_sorted(hookList, (GHook *)hook, GPrioritizedHookCompare);
 }
 
 void
 GProritizedHookPrint(GHook *hook, gpointer data)
 {
-    GPrioritizedHook *gphook = (GPrioritizedHook*)hook;
-    g_info("%d. %s", gphook->priority, gphook->func_name);
+	GPrioritizedHook *gphook = (GPrioritizedHook *)hook;
+	g_info("%d. %s", gphook->priority, gphook->func_name);
 }
 
 void
 GHookListPrint(gpointer key, gpointer value, gpointer data)
 {
-    const char *hookName = (const char*)key;
-    GHookList *hookList = (GHookList*)value;
+	const char *hookName = (const char *)key;
+	GHookList *hookList = (GHookList *)value;
 
-    g_info("InitList: %s", hookName);
-    g_hook_list_marshal(hookList, TRUE, GProritizedHookPrint, NULL);
+	g_info("InitList: %s", hookName);
+	g_hook_list_marshal(hookList, TRUE, GProritizedHookPrint, NULL);
 }
 
 /**
@@ -131,12 +137,12 @@ GHookListPrint(gpointer key, gpointer value, gpointer data)
 void
 PrintHookLists(void)
 {
-    g_hash_table_foreach(namedInitFuncs, GHookListPrint, NULL);
+	g_hash_table_foreach(namedInitFuncs, GHookListPrint, NULL);
 }
 
 /**
  * Runs all of the initialization hooks
- * 
+ *
  * This function runs all of the initialization functions which are preloaded
  * into our {@link namedInitFuncs} array via the use of the {@link INIT_FUNC}
  * macro using some GCC-specific functionality which runs code to install the
@@ -145,16 +151,18 @@ PrintHookLists(void)
 void
 TheOneInit(void)
 {
-    if (gSleepConfig.debug)
-    {
-        PrintHookLists();
-    }
+	if (gSleepConfig.debug)
+	{
+		PrintHookLists();
+	}
 
-    /** Run common init funcs **/
-    GHookList *commonInitFuncs = g_hash_table_lookup(namedInitFuncs, COMMON_INIT_NAME);
-    if (commonInitFuncs)
-    {
-        g_info("\n%s Running common Inits", __FUNCTION__);
-        g_hook_list_invoke(commonInitFuncs, FALSE);
-    }
+	/** Run common init funcs **/
+	GHookList *commonInitFuncs = g_hash_table_lookup(namedInitFuncs,
+	                             COMMON_INIT_NAME);
+
+	if (commonInitFuncs)
+	{
+		g_info("\n%s Running common Inits", __FUNCTION__);
+		g_hook_list_invoke(commonInitFuncs, FALSE);
+	}
 }

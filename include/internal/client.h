@@ -25,18 +25,18 @@
 
 struct PwrEventClientInfo
 {
-    char *clientName;
-    char *clientId;
-    char *applicationName;
+	char *clientName;
+	char *clientId;
+	char *applicationName;
 
-    bool requireSuspendRequest;
-    bool requirePrepareSuspend;
+	bool requireSuspendRequest;
+	bool requirePrepareSuspend;
 
-    int ackSuspendRequest;
-    int ackPrepareSuspend;
+	int ackSuspendRequest;
+	int ackPrepareSuspend;
 
-    int num_NACK_suspendRequest;
-    int num_NACK_prepareSuspend;
+	int num_NACK_suspendRequest;
+	int num_NACK_prepareSuspend;
 };
 
 #define PWREVENT_CLIENT_ACK   1
@@ -46,9 +46,9 @@ struct PwrEventClientInfo
 // hash is client_id -> PwrEventClientInfo
 GHashTable *PwrEventClientGetTable(void);
 
-typedef const char* ClientUID;
+typedef const char *ClientUID;
 
-struct PwrEventClientInfo* PwrEventClientLookup(ClientUID uid);
+struct PwrEventClientInfo *PwrEventClientLookup(ClientUID uid);
 
 bool PwrEventClientRegister(ClientUID uid);
 
@@ -58,9 +58,9 @@ void PwrEventClientTableCreate(void);
 void PwrEventClientTableDestroy(void);
 
 void PwrEventClientTablePrint(GLogLevelFlags lvl);
-gchar * PwrEventGetClientTable();
-gchar * PwrEventGetSuspendRequestNORSPList();
-gchar * PwrEventGetPrepareSuspendNORSPList();
+gchar *PwrEventGetClientTable();
+gchar *PwrEventGetSuspendRequestNORSPList();
+gchar *PwrEventGetPrepareSuspendNORSPList();
 
 void PwrEventClientSuspendRequestNACKIncr(struct PwrEventClientInfo *info);
 void PwrEventClientPrepareSuspendNACKIncr(struct PwrEventClientInfo *info);
@@ -78,6 +78,6 @@ bool PwrEventVotePrepareSuspend(ClientUID uid, bool ack);
 bool PwrEventClientsApproveSuspendRequest(void);
 bool PwrEventClientsApprovePrepareSuspend(void);
 
-bool PwrEventClientUnregisterByName(char * clientName);
+bool PwrEventClientUnregisterByName(char *clientName);
 
 #endif // _PWREVENTS_CLIENT_H_

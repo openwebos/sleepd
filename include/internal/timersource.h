@@ -24,13 +24,15 @@
 
 typedef struct _GTimerSource GTimerSource;
 
-GTimerSource * g_timer_source_new(guint interval_ms, guint granularity_ms);
+GTimerSource *g_timer_source_new(guint interval_ms, guint granularity_ms);
 
 GTimerSource *g_timer_source_new_seconds(guint interval_seconds);
 
-void g_timer_source_set_interval_seconds(GTimerSource *tsource, guint interval_sec, gboolean from_poll);
+void g_timer_source_set_interval_seconds(GTimerSource *tsource,
+        guint interval_sec, gboolean from_poll);
 
-void g_timer_source_set_interval(GTimerSource *tsource, guint interval, gboolean from_poll);
+void g_timer_source_set_interval(GTimerSource *tsource, guint interval,
+                                 gboolean from_poll);
 
 guint g_timer_source_get_interval_ms(GTimerSource *tsource);
 

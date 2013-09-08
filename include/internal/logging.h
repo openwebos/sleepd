@@ -20,7 +20,8 @@
 #define __LOGGING_H__
 #include <sys/syslog.h>
 
-typedef enum {
+typedef enum
+{
     LOGSyslog = 0,
     LOGGlibLog,
     LOG_NUM_HANDLERS

@@ -48,50 +48,57 @@ void
 timesaver_save()
 {
 	if (!time_db)
-    {
+	{
 		time_db = g_build_filename(
-				gSleepConfig.preference_dir, "time_saver", NULL);
+		              gSleepConfig.preference_dir, "time_saver", NULL);
 		time_db_tmp = g_build_filename(
-				gSleepConfig.preference_dir, "time_saver.tmp", NULL);
-    }
+		                  gSleepConfig.preference_dir, "time_saver.tmp", NULL);
+	}
 
-    if (NULL == time_db)
-    {
-        // This can happen if we goto ls_error in main()
-        g_warning("%s called with time database name (time_db) uninitialized", __FUNCTION__);
-        goto cleanup;
-    }
+	if (NULL == time_db)
+	{
+		// This can happen if we goto ls_error in main()
+		g_warning("%s called with time database name (time_db) uninitialized",
+		          __FUNCTION__);
+		goto cleanup;
+	}
 
-    //  First write the contents to tmp file and then rename to "time_saver" file
-    //  to ensure file integrity with power cut or battery pull.
+	//  First write the contents to tmp file and then rename to "time_saver" file
+	//  to ensure file integrity with power cut or battery pull.
 
-    int file = open(time_db_tmp, O_CREAT | O_WRONLY, S_IRWXU | S_IRGRP | S_IROTH);
-    if (!file)
-    {
-        g_warning("%s: Could not save time to \"%s\"", __FUNCTION__, time_db_tmp);
-        goto cleanup;
-    }
+	int file = open(time_db_tmp, O_CREAT | O_WRONLY, S_IRWXU | S_IRGRP | S_IROTH);
 
-    struct timespec tp;
-    clock_gettime(CLOCK_REALTIME, &tp);
+	if (!file)
+	{
+		g_warning("%s: Could not save time to \"%s\"", __FUNCTION__, time_db_tmp);
+		goto cleanup;
+	}
 
-    SLEEPDLOG(LOG_DEBUG, "%s Saving to file %ld", __FUNCTION__, tp.tv_sec);
+	struct timespec tp;
 
-    char timestamp[16];
+	clock_gettime(CLOCK_REALTIME, &tp);
 
-    snprintf(timestamp,sizeof(timestamp),"%ld", tp.tv_sec);
+	SLEEPDLOG(LOG_DEBUG, "%s Saving to file %ld", __FUNCTION__, tp.tv_sec);
 
-    write(file,timestamp,strlen(timestamp));
-    fsync(file);
-    close(file);
+	char timestamp[16];
 
-    int ret = rename(time_db_tmp,time_db);
-    if (ret)
-    {
-    	g_warning("%s : Unable to rename %s to %s",__FUNCTION__,time_db_tmp,time_db);
-    }
+	snprintf(timestamp, sizeof(timestamp), "%ld", tp.tv_sec);
+
+	write(file, timestamp, strlen(timestamp));
+
+	fsync(file);
+
+	close(file);
+
+	int ret = rename(time_db_tmp, time_db);
+
+	if (ret)
+	{
+		g_warning("%s : Unable to rename %s to %s", __FUNCTION__, time_db_tmp, time_db);
+	}
+
 	unlink(time_db_tmp);
 
 cleanup:
-    return;
+	return;
 }

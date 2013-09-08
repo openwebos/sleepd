@@ -44,51 +44,58 @@
 * @brief Contains list of applications and services
 *        interested in shutdown.
 */
-typedef struct {
-    GHashTable *applications;
-    GHashTable *services;
+typedef struct
+{
+	GHashTable *applications;
+	GHashTable *services;
 
-    int num_ack;
-    int num_nack;
+	int num_ack;
+	int num_nack;
 } ShutdownClientList;
 
-typedef enum {
+typedef enum
+{
     kShutdownReplyNoRsp,
     kShutdownReplyAck,
     kShutdownReplyNack,
     kShutdownReplyLast
 } ShutdownReply;
 
-const char* ShutdownReplyString[kShutdownReplyLast] =
-{   "No_Response",
-    "Ack",
-    "Nack",
+const char *ShutdownReplyString[kShutdownReplyLast] =
+{
+	"No_Response",
+	"Ack",
+	"Nack",
 };
 
-static const char*
+static const char *
 shutdown_reply_to_string(ShutdownReply reply)
 {
-    if (reply < 0 || reply >= kShutdownReplyLast)
-        return "";
+	if (reply < 0 || reply >= kShutdownReplyLast)
+	{
+		return "";
+	}
 
-    return ShutdownReplyString[reply];
+	return ShutdownReplyString[reply];
 }
 
 /**
 * @brief Client information.
 */
-typedef struct {
-    char            *id;
-    char            *name;
-    ShutdownReply    ack_shutdown;
+typedef struct
+{
+	char            *id;
+	char            *name;
+	ShutdownReply    ack_shutdown;
 
-    double           elapsed;
+	double           elapsed;
 } ShutdownClient;
 
 /**
 * @brief States.
 */
-enum {
+enum
+{
     kPowerShutdownNone,
 
     kPowerShutdownApps,
@@ -106,7 +113,8 @@ typedef int ShutdownState;
 /**
 * @brief Events types that drive the state machine.
 */
-typedef enum {
+typedef enum
+{
     kShutdownEventNone,
 
     kShutdownEventShutdownInit,
@@ -122,9 +130,10 @@ typedef enum {
 /**
 * @brief Event
 */
-typedef struct {
-    ShutdownEventType    id;
-    ShutdownClient      *client;
+typedef struct
+{
+	ShutdownEventType    id;
+	ShutdownClient      *client;
 } ShutdownEvent;
 
 /**
@@ -132,17 +141,20 @@ typedef struct {
  */
 typedef bool (*PowerShutdownProc)(ShutdownEvent *event, ShutdownState *next);
 
-typedef struct {
-    const char *name;
-    ShutdownState     state;
-    PowerShutdownProc function;
+typedef struct
+{
+	const char *name;
+	ShutdownState     state;
+	PowerShutdownProc function;
 } ShutdownStateNode;
 
 static bool state_idle(ShutdownEvent *event, ShutdownState *next);
 static bool state_shutdown_apps(ShutdownEvent *event, ShutdownState *next);
-static bool state_shutdown_apps_process(ShutdownEvent *event, ShutdownState *next);
+static bool state_shutdown_apps_process(ShutdownEvent *event,
+                                        ShutdownState *next);
 static bool state_shutdown_services(ShutdownEvent *event, ShutdownState *next);
-static bool state_shutdown_services_process(ShutdownEvent *event, ShutdownState *next);
+static bool state_shutdown_services_process(ShutdownEvent *event,
+        ShutdownState *next);
 static bool state_shutdown_action(ShutdownEvent *event, ShutdownState *next);
 
 static void send_shutdown_apps();
@@ -153,13 +165,14 @@ static bool shutdown_timeout(void *data);
 /**
  * Mapping from state to function handling state.
  */
-static const ShutdownStateNode kStateMachine[kPowerShutdownLast] = {
-    { "ShutdownIdle",            kPowerShutdownNone,          state_idle                    },
-    { "ShutdownApps",            kPowerShutdownApps,          state_shutdown_apps           },
-    { "ShutdownAppsProcess",     kPowerShutdownAppsProcess,   state_shutdown_apps_process    },
-    { "ShutdownServices",        kPowerShutdownServices,      state_shutdown_services       },
-    { "ShutdownServicesProcess", kPowerShutdownServicesProcess, state_shutdown_services_process },
-    { "ShutdownAction",          kPowerShutdownAction,        state_shutdown_action },
+static const ShutdownStateNode kStateMachine[kPowerShutdownLast] =
+{
+	{ "ShutdownIdle",            kPowerShutdownNone,          state_idle                    },
+	{ "ShutdownApps",            kPowerShutdownApps,          state_shutdown_apps           },
+	{ "ShutdownAppsProcess",     kPowerShutdownAppsProcess,   state_shutdown_apps_process    },
+	{ "ShutdownServices",        kPowerShutdownServices,      state_shutdown_services       },
+	{ "ShutdownServicesProcess", kPowerShutdownServicesProcess, state_shutdown_services_process },
+	{ "ShutdownAction",          kPowerShutdownAction,        state_shutdown_action },
 };
 
 /* Globals */
@@ -172,7 +185,7 @@ guint shutdown_apps_timeout_id = 0;
 GTimer  *shutdown_timer = NULL;
 
 /**
- * @defgroup ShutdownProcess	Shutdown Process
+ * @defgroup ShutdownProcess    Shutdown Process
  * @ingroup PowerEvents
  * @brief The Shutdown Process:
  *
@@ -205,12 +218,12 @@ GTimer  *shutdown_timer = NULL;
 static ShutdownClient *
 client_new(const char *key, const char *clientName)
 {
-    ShutdownClient *client = g_new0(ShutdownClient, 1);
-    client->id  = g_strdup(key);
-    client->name = g_strdup(clientName);
-    client->ack_shutdown = kShutdownReplyNoRsp;
+	ShutdownClient *client = g_new0(ShutdownClient, 1);
+	client->id  = g_strdup(key);
+	client->name = g_strdup(clientName);
+	client->ack_shutdown = kShutdownReplyNoRsp;
 
-    return client;
+	return client;
 }
 
 /**
@@ -219,12 +232,12 @@ client_new(const char *key, const char *clientName)
 static void
 client_free(ShutdownClient *client)
 {
-    if (client)
-    {
-        g_free(client->id);
-        g_free(client->name);
-        g_free(client);
-    }
+	if (client)
+	{
+		g_free(client->id);
+		g_free(client->name);
+		g_free(client);
+	}
 }
 
 /**
@@ -236,8 +249,8 @@ client_free(ShutdownClient *client)
 static void
 client_new_application(const char *key, const char *clientName)
 {
-    ShutdownClient *client = client_new(key, clientName);
-    g_hash_table_replace(sClientList->applications, client->id, client);
+	ShutdownClient *client = client_new(key, clientName);
+	g_hash_table_replace(sClientList->applications, client->id, client);
 }
 
 /**
@@ -249,8 +262,8 @@ client_new_application(const char *key, const char *clientName)
 static void
 client_new_service(const char *key, const char *clientName)
 {
-    ShutdownClient *client = client_new(key, clientName);
-    g_hash_table_replace(sClientList->services, client->id, client);
+	ShutdownClient *client = client_new(key, clientName);
+	g_hash_table_replace(sClientList->services, client->id, client);
 }
 
 /**
@@ -259,10 +272,10 @@ client_new_service(const char *key, const char *clientName)
 static void
 client_vote_clear(const char *key, ShutdownClient *client, void *data)
 {
-    _assert(client != NULL);
+	_assert(client != NULL);
 
-    client->ack_shutdown = kShutdownReplyNoRsp;
-    client->elapsed = 0.0;
+	client->ack_shutdown = kShutdownReplyNoRsp;
+	client->elapsed = 0.0;
 }
 
 /**
@@ -272,7 +285,7 @@ client_vote_clear(const char *key, ShutdownClient *client, void *data)
 static void
 client_unregister_application(const char *uid)
 {
-    g_hash_table_remove(sClientList->applications, uid);
+	g_hash_table_remove(sClientList->applications, uid);
 }
 
 /**
@@ -281,7 +294,7 @@ client_unregister_application(const char *uid)
 static void
 client_unregister_service(const char *uid)
 {
-    g_hash_table_remove(sClientList->services, uid);
+	g_hash_table_remove(sClientList->services, uid);
 }
 
 
@@ -291,8 +304,8 @@ client_unregister_service(const char *uid)
 static ShutdownClient *
 client_lookup_service(const char *uid)
 {
-    return (ShutdownClient*)g_hash_table_lookup(
-                            sClientList->services, uid);
+	return (ShutdownClient *)g_hash_table_lookup(
+	           sClientList->services, uid);
 }
 
 /**
@@ -301,8 +314,8 @@ client_lookup_service(const char *uid)
 static ShutdownClient *
 client_lookup_app(const char *uid)
 {
-    return (ShutdownClient*)g_hash_table_lookup(
-                            sClientList->applications, uid);
+	return (ShutdownClient *)g_hash_table_lookup(
+	           sClientList->applications, uid);
 }
 
 
@@ -312,8 +325,8 @@ client_lookup_app(const char *uid)
 static void
 client_list_reset_ack_count()
 {
-    sClientList->num_ack = 0;
-    sClientList->num_nack = 0;
+	sClientList->num_ack = 0;
+	sClientList->num_nack = 0;
 }
 
 /**
@@ -322,12 +335,12 @@ client_list_reset_ack_count()
 static void
 client_list_vote_init()
 {
-    g_hash_table_foreach(sClientList->applications,
-            (GHFunc)client_vote_clear, NULL);
-    g_hash_table_foreach(sClientList->services,
-            (GHFunc)client_vote_clear, NULL);
+	g_hash_table_foreach(sClientList->applications,
+	                     (GHFunc)client_vote_clear, NULL);
+	g_hash_table_foreach(sClientList->services,
+	                     (GHFunc)client_vote_clear, NULL);
 
-    client_list_reset_ack_count();
+	client_list_reset_ack_count();
 }
 
 /**
@@ -337,20 +350,23 @@ client_list_vote_init()
 static void
 client_vote(ShutdownClient *client, bool ack)
 {
-    if (!client) return;
+	if (!client)
+	{
+		return;
+	}
 
-    client->ack_shutdown = ack ? kShutdownReplyAck : kShutdownReplyNack;
+	client->ack_shutdown = ack ? kShutdownReplyAck : kShutdownReplyNack;
 
-    client->elapsed = g_timer_elapsed(shutdown_timer, NULL);
+	client->elapsed = g_timer_elapsed(shutdown_timer, NULL);
 
-    if (ack)
-    {
-        sClientList->num_ack++;
-    }
-    else
-    {
-        sClientList->num_nack++;
-    }
+	if (ack)
+	{
+		sClientList->num_ack++;
+	}
+	else
+	{
+		sClientList->num_nack++;
+	}
 }
 
 /**
@@ -359,9 +375,9 @@ client_vote(ShutdownClient *client, bool ack)
 static void
 client_vote_print(const char *key, ShutdownClient *client, void *data)
 {
-    SLEEPDLOG(LOG_INFO, "    %s %s %s @ %fs", client->id, client->name,
-            shutdown_reply_to_string(client->ack_shutdown),
-            client->elapsed);
+	SLEEPDLOG(LOG_INFO, "    %s %s %s @ %fs", client->id, client->name,
+	          shutdown_reply_to_string(client->ack_shutdown),
+	          client->elapsed);
 }
 
 /**
@@ -371,19 +387,19 @@ client_vote_print(const char *key, ShutdownClient *client, void *data)
 static void
 client_list_print(GHashTable *client_table)
 {
-    int size = g_hash_table_size(client_table);
+	int size = g_hash_table_size(client_table);
 
-    SLEEPDLOG(LOG_INFO, "clients:");
+	SLEEPDLOG(LOG_INFO, "clients:");
 
-    if (size > 0)
-    {
-        g_hash_table_foreach(client_table,
-                (GHFunc)client_vote_print, NULL);
-    }
-    else
-    {
-        SLEEPDLOG(LOG_INFO, "    No clients registered.");
-    }
+	if (size > 0)
+	{
+		g_hash_table_foreach(client_table,
+		                     (GHFunc)client_vote_print, NULL);
+	}
+	else
+	{
+		SLEEPDLOG(LOG_INFO, "    No clients registered.");
+	}
 }
 
 /**
@@ -394,15 +410,15 @@ client_list_print(GHashTable *client_table)
 static int
 shutdown_apps_ready()
 {
-    if (0 == sClientList->num_nack)
-    {
-        int num_clients = g_hash_table_size(sClientList->applications);
-        return sClientList->num_ack >= num_clients;
-    }
-    else
-    {
-        return -1;
-    }
+	if (0 == sClientList->num_nack)
+	{
+		int num_clients = g_hash_table_size(sClientList->applications);
+		return sClientList->num_ack >= num_clients;
+	}
+	else
+	{
+		return -1;
+	}
 }
 
 /**
@@ -413,15 +429,15 @@ shutdown_apps_ready()
 static int
 shutdown_services_ready()
 {
-    if (0 == sClientList->num_nack)
-    {
-        int num_clients = g_hash_table_size(sClientList->services);
-        return sClientList->num_ack >= num_clients;
-    }
-    else
-    {
-        return -1;
-    }
+	if (0 == sClientList->num_nack)
+	{
+		int num_clients = g_hash_table_size(sClientList->services);
+		return sClientList->num_ack >= num_clients;
+	}
+	else
+	{
+		return -1;
+	}
 }
 
 /**
@@ -431,24 +447,24 @@ shutdown_services_ready()
 static void
 shutdown_state_dispatch(ShutdownEvent *event)
 {
-    ShutdownState next_state = gCurrentState->state;
-    bool running = true;
+	ShutdownState next_state = gCurrentState->state;
+	bool running = true;
 
-    while (running)
-    {
-        running = gCurrentState->function(event, &next_state);
+	while (running)
+	{
+		running = gCurrentState->function(event, &next_state);
 
-        _assert(next_state >= gCurrentState->state);
+		_assert(next_state >= gCurrentState->state);
 
-        if (next_state != gCurrentState->state)
-        {
-            SLEEPDLOG(LOG_DEBUG, "Shutdown: entering state: %s @ %fs",
-                    kStateMachine[next_state].name,
-                    g_timer_elapsed(shutdown_timer, NULL));
-        }
+		if (next_state != gCurrentState->state)
+		{
+			SLEEPDLOG(LOG_DEBUG, "Shutdown: entering state: %s @ %fs",
+			          kStateMachine[next_state].name,
+			          g_timer_elapsed(shutdown_timer, NULL));
+		}
 
-        gCurrentState = &kStateMachine[next_state];
-    }
+		gCurrentState = &kStateMachine[next_state];
+	}
 }
 
 /**
@@ -457,19 +473,20 @@ shutdown_state_dispatch(ShutdownEvent *event)
 static void
 send_shutdown_apps()
 {
-    bool retVal;
-    LSError lserror;
-    LSErrorInit(&lserror);
+	bool retVal;
+	LSError lserror;
+	LSErrorInit(&lserror);
 
-    retVal = LSSignalSend(GetLunaServiceHandle(),
-        "luna://com.palm.sleep/shutdown/shutdownApplications",
-       "{}", &lserror);
-    if (!retVal)
-    {
-        g_critical("%s Could not send shutdown applications", __FUNCTION__);
-        LSErrorPrint(&lserror, stderr);
-        LSErrorFree(&lserror);
-    }
+	retVal = LSSignalSend(GetLunaServiceHandle(),
+	                      "luna://com.palm.sleep/shutdown/shutdownApplications",
+	                      "{}", &lserror);
+
+	if (!retVal)
+	{
+		g_critical("%s Could not send shutdown applications", __FUNCTION__);
+		LSErrorPrint(&lserror, stderr);
+		LSErrorFree(&lserror);
+	}
 }
 
 /**
@@ -479,32 +496,33 @@ send_shutdown_apps()
 static void
 send_shutdown_services()
 {
-    bool retVal;
-    LSError lserror;
-    LSErrorInit(&lserror);
+	bool retVal;
+	LSError lserror;
+	LSErrorInit(&lserror);
 
-    retVal = LSSignalSend(GetLunaServiceHandle(),
-        "luna://com.palm.sleep/shutdown/shutdownServices",
-        "{}", &lserror);
-    if (!retVal)
-    {
-        g_critical("%s Could not send shutdown applications", __FUNCTION__);
-        LSErrorPrint(&lserror, stderr);
-        LSErrorFree(&lserror);
-    }
+	retVal = LSSignalSend(GetLunaServiceHandle(),
+	                      "luna://com.palm.sleep/shutdown/shutdownServices",
+	                      "{}", &lserror);
+
+	if (!retVal)
+	{
+		g_critical("%s Could not send shutdown applications", __FUNCTION__);
+		LSErrorPrint(&lserror, stderr);
+		LSErrorFree(&lserror);
+	}
 }
 
 /**
 * @brief Unregister te application/service with the given ID.
-* 		 Called by the cancel function set by LSSubscriptionSetCancelFunction.
+*        Called by the cancel function set by LSSubscriptionSetCancelFunction.
 *
 * @param  clientId
 */
 void
 shutdown_client_cancel_registration(const char *clientId)
 {
-    client_unregister_application(clientId);
-    client_unregister_service(clientId);
+	client_unregister_application(clientId);
+	client_unregister_service(clientId);
 }
 
 
@@ -514,37 +532,44 @@ shutdown_client_cancel_registration(const char *clientId)
 * @param  clientName
 */
 void
-shutdown_client_cancel_registration_by_name(char * clientName)
+shutdown_client_cancel_registration_by_name(char *clientName)
 {
-    if (NULL == clientName)
-        return;
-
-    ShutdownClient *clientInfo=NULL;
-    GHashTableIter iter;
-    gpointer key, value;
-
-    g_hash_table_iter_init (&iter, sClientList->applications);
-    while (g_hash_table_iter_next (&iter, &key, &value))
+	if (NULL == clientName)
 	{
-    	clientInfo=value;
-    	if(!strcmp(clientInfo->name,clientName))
-    	{
-    		client_unregister_service(clientInfo->id);
-    		break;
-    	}
+		return;
 	}
 
-    g_hash_table_iter_init (&iter, sClientList->services);
-       while (g_hash_table_iter_next (&iter, &key, &value))
-   	{
-       	clientInfo=value;
-       	if(!strcmp(clientInfo->name,clientName))
-       	{
-       		client_unregister_service(clientInfo->id);
-       		return;
-       	}
-   	}
-    return;
+	ShutdownClient *clientInfo = NULL;
+	GHashTableIter iter;
+	gpointer key, value;
+
+	g_hash_table_iter_init(&iter, sClientList->applications);
+
+	while (g_hash_table_iter_next(&iter, &key, &value))
+	{
+		clientInfo = value;
+
+		if (!strcmp(clientInfo->name, clientName))
+		{
+			client_unregister_service(clientInfo->id);
+			break;
+		}
+	}
+
+	g_hash_table_iter_init(&iter, sClientList->services);
+
+	while (g_hash_table_iter_next(&iter, &key, &value))
+	{
+		clientInfo = value;
+
+		if (!strcmp(clientInfo->name, clientName))
+		{
+			client_unregister_service(clientInfo->id);
+			return;
+		}
+	}
+
+	return;
 }
 
 /**
@@ -555,15 +580,16 @@ shutdown_client_cancel_registration_by_name(char * clientName)
 static bool
 state_idle(ShutdownEvent *event, ShutdownState *next)
 {
-    switch (event->id)
-    {
-    case kShutdownEventShutdownInit:
-        client_list_vote_init();
-        *next = kPowerShutdownApps;
-        return true;
-    default:
-        return false;
-    }
+	switch (event->id)
+	{
+		case kShutdownEventShutdownInit:
+			client_list_vote_init();
+			*next = kPowerShutdownApps;
+			return true;
+
+		default:
+			return false;
+	}
 }
 
 /**
@@ -573,17 +599,17 @@ state_idle(ShutdownEvent *event, ShutdownState *next)
 static bool
 state_shutdown_apps(ShutdownEvent *event, ShutdownState *next)
 {
-    client_list_reset_ack_count();
+	client_list_reset_ack_count();
 
-    event->id = kShutdownEventNone;
-    *next = kPowerShutdownAppsProcess;
+	event->id = kShutdownEventNone;
+	*next = kPowerShutdownAppsProcess;
 
-    shutdown_apps_timeout_id =
-        g_timeout_add_seconds(15, (GSourceFunc)shutdown_timeout, NULL);
+	shutdown_apps_timeout_id =
+	    g_timeout_add_seconds(15, (GSourceFunc)shutdown_timeout, NULL);
 
-    send_shutdown_apps();
+	send_shutdown_apps();
 
-    return true;
+	return true;
 }
 
 /**
@@ -592,14 +618,14 @@ state_shutdown_apps(ShutdownEvent *event, ShutdownState *next)
 static bool
 shutdown_timeout(void *data)
 {
-    ShutdownEvent event;
+	ShutdownEvent event;
 
-    event.id = kShutdownEventTimeout;
-    event.client = NULL;
+	event.id = kShutdownEventTimeout;
+	event.client = NULL;
 
-    shutdown_state_dispatch(&event);
+	shutdown_state_dispatch(&event);
 
-    return FALSE;
+	return FALSE;
 }
 
 /**
@@ -609,44 +635,48 @@ shutdown_timeout(void *data)
 static bool
 state_shutdown_apps_process(ShutdownEvent *event, ShutdownState *next)
 {
-    bool timeout = false;
+	bool timeout = false;
 
-    switch (event->id)
-    {
-    case kShutdownEventAck:
-        client_vote(event->client, true);
-        break;
-    case kShutdownEventTimeout:
-        timeout = true;
-        break;
-    default:
-        break;
-    }
+	switch (event->id)
+	{
+		case kShutdownEventAck:
+			client_vote(event->client, true);
+			break;
 
-    int readiness = shutdown_apps_ready();
-    if (readiness > 0 || timeout)
-    {
-        if (timeout)
-        {
-            SLEEPDLOG(LOG_CRIT, "Shutdown apps timed out: ");
-        }
-        client_list_print(sClientList->applications);
+		case kShutdownEventTimeout:
+			timeout = true;
+			break;
 
-        g_source_remove(shutdown_apps_timeout_id);
+		default:
+			break;
+	}
 
-        *next = kPowerShutdownServices;
-        return true;
-    }
-    else if (readiness < 0)
-    {
-        *next = kPowerShutdownNone;
-        return false;
-    }
-    else
-    {
-        *next = kPowerShutdownAppsProcess;
-        return false;
-    }
+	int readiness = shutdown_apps_ready();
+
+	if (readiness > 0 || timeout)
+	{
+		if (timeout)
+		{
+			SLEEPDLOG(LOG_CRIT, "Shutdown apps timed out: ");
+		}
+
+		client_list_print(sClientList->applications);
+
+		g_source_remove(shutdown_apps_timeout_id);
+
+		*next = kPowerShutdownServices;
+		return true;
+	}
+	else if (readiness < 0)
+	{
+		*next = kPowerShutdownNone;
+		return false;
+	}
+	else
+	{
+		*next = kPowerShutdownAppsProcess;
+		return false;
+	}
 }
 
 /**
@@ -657,17 +687,17 @@ state_shutdown_apps_process(ShutdownEvent *event, ShutdownState *next)
 static bool
 state_shutdown_services(ShutdownEvent *event, ShutdownState *next)
 {
-    client_list_reset_ack_count();
+	client_list_reset_ack_count();
 
-    event->id = kShutdownEventNone;
-    *next = kPowerShutdownServicesProcess;
+	event->id = kShutdownEventNone;
+	*next = kPowerShutdownServicesProcess;
 
-    shutdown_apps_timeout_id =
-        g_timeout_add_seconds(15, (GSourceFunc)shutdown_timeout, NULL);
+	shutdown_apps_timeout_id =
+	    g_timeout_add_seconds(15, (GSourceFunc)shutdown_timeout, NULL);
 
-    send_shutdown_services();
+	send_shutdown_services();
 
-    return true;
+	return true;
 }
 
 /**
@@ -677,43 +707,47 @@ state_shutdown_services(ShutdownEvent *event, ShutdownState *next)
 static bool
 state_shutdown_services_process(ShutdownEvent *event, ShutdownState *next)
 {
-    bool timeout = false;
+	bool timeout = false;
 
-    switch (event->id)
-    {
-    case kShutdownEventAck:
-        client_vote(event->client, true);
-        break;
-    case kShutdownEventTimeout:
-        timeout = true;
-        break;
-    default:
-        break;
-    }
+	switch (event->id)
+	{
+		case kShutdownEventAck:
+			client_vote(event->client, true);
+			break;
 
-    int readiness = shutdown_services_ready();
-    if (readiness > 0 || timeout)
-    {
-        if (timeout)
-        {
-            SLEEPDLOG(LOG_CRIT, "Shutdown services timed out: ");
-        }
-        client_list_print(sClientList->services);
+		case kShutdownEventTimeout:
+			timeout = true;
+			break;
 
-        *next = kPowerShutdownAction;
-        g_source_remove(shutdown_apps_timeout_id);
-        return true;
-    }
-    else if (readiness < 0)
-    {
-        *next = kPowerShutdownNone;
-        return false;
-    }
-    else
-    {
-        *next = kPowerShutdownServicesProcess;
-        return false;
-    }
+		default:
+			break;
+	}
+
+	int readiness = shutdown_services_ready();
+
+	if (readiness > 0 || timeout)
+	{
+		if (timeout)
+		{
+			SLEEPDLOG(LOG_CRIT, "Shutdown services timed out: ");
+		}
+
+		client_list_print(sClientList->services);
+
+		*next = kPowerShutdownAction;
+		g_source_remove(shutdown_apps_timeout_id);
+		return true;
+	}
+	else if (readiness < 0)
+	{
+		*next = kPowerShutdownNone;
+		return false;
+	}
+	else
+	{
+		*next = kPowerShutdownServicesProcess;
+		return false;
+	}
 }
 
 /**
@@ -724,24 +758,25 @@ state_shutdown_services_process(ShutdownEvent *event, ShutdownState *next)
 static bool
 state_shutdown_action(ShutdownEvent *event, ShutdownState *next)
 {
-    bool retVal =
-        LSMessageReply(GetLunaServiceHandle(), shutdown_message,
-            "{\"success\":true}", NULL);
-    if (!retVal)
-    {
-        g_critical("%s: Could not send shutdown success message",
-                __FUNCTION__);
-    }
+	bool retVal =
+	    LSMessageReply(GetLunaServiceHandle(), shutdown_message,
+	                   "{\"success\":true}", NULL);
 
-    if (shutdown_message)
-    {
-        LSMessageUnref(shutdown_message);
-        shutdown_message = NULL;
-    }
+	if (!retVal)
+	{
+		g_critical("%s: Could not send shutdown success message",
+		           __FUNCTION__);
+	}
 
-    nyx_system_set_alarm(GetNyxSystemDevice(),0,NULL,NULL);
+	if (shutdown_message)
+	{
+		LSMessageUnref(shutdown_message);
+		shutdown_message = NULL;
+	}
 
-    return false;
+	nyx_system_set_alarm(GetNyxSystemDevice(), 0, NULL, NULL);
+
+	return false;
 }
 
 /**
@@ -752,22 +787,23 @@ static void
 send_reply(LSHandle *sh, LSMessage *message,
            const char *format, ...)
 {
-    bool retVal;
-    char *payload;
-    va_list vargs;
+	bool retVal;
+	char *payload;
+	va_list vargs;
 
-    va_start(vargs, format);
-    payload = g_strdup_vprintf(format, vargs);
-    va_end(vargs);
+	va_start(vargs, format);
+	payload = g_strdup_vprintf(format, vargs);
+	va_end(vargs);
 
-    retVal = LSMessageReply(sh, message, payload, NULL);
-    if (!retVal)
-    {
-        g_critical("Could not send reply with payload %s",
-            payload);
-    }
+	retVal = LSMessageReply(sh, message, payload, NULL);
 
-    g_free(payload);
+	if (!retVal)
+	{
+		g_critical("Could not send reply with payload %s",
+		           payload);
+	}
+
+	g_free(payload);
 }
 
 
@@ -781,18 +817,18 @@ send_reply(LSHandle *sh, LSMessage *message,
 static bool
 initiateShutdown(LSHandle *sh, LSMessage *message, void *user_data)
 {
-    ShutdownEvent event;
+	ShutdownEvent event;
 
-    event.id = kShutdownEventShutdownInit;
-    event.client = NULL;
+	event.id = kShutdownEventShutdownInit;
+	event.client = NULL;
 
-    LSMessageRef(message);
-    shutdown_message = message;
+	LSMessageRef(message);
+	shutdown_message = message;
 
-    g_timer_start(shutdown_timer);
+	g_timer_start(shutdown_timer);
 
-    shutdown_state_dispatch(&event);
-    return true;
+	shutdown_state_dispatch(&event);
+	return true;
 }
 
 /**
@@ -807,10 +843,10 @@ initiateShutdown(LSHandle *sh, LSMessage *message, void *user_data)
 static bool
 TESTresetShutdownState(LSHandle *sh, LSMessage *message, void *user_data)
 {
-    g_debug("Resetting shutdown state.");
+	g_debug("Resetting shutdown state.");
 
-    gCurrentState = &kStateMachine[kPowerShutdownNone];
-    return true;
+	gCurrentState = &kStateMachine[kPowerShutdownNone];
+	return true;
 }
 
 /**
@@ -826,32 +862,40 @@ TESTresetShutdownState(LSHandle *sh, LSMessage *message, void *user_data)
 
 static bool
 shutdownApplicationsAck(LSHandle *sh, LSMessage *message,
-                             void *user_data)
+                        void *user_data)
 {
-    struct json_object *object = json_tokener_parse(
-                                    LSMessageGetPayload(message));
-    if (is_error(object))
-    {
-        LSMessageReplyErrorBadJSON(sh, message);
-        goto cleanup;
-    }
-    const char *clientId = json_object_get_string(
-            json_object_object_get(object, "clientId"));
-    if (!clientId)
-    {
-        LSMessageReplyErrorInvalidParams(sh, message);
-        goto cleanup;
-    }
+	struct json_object *object = json_tokener_parse(
+	                                 LSMessageGetPayload(message));
 
-    ShutdownEvent event;
-    event.id = kShutdownEventAck;
-    event.client = client_lookup_app(clientId);
+	if (is_error(object))
+	{
+		LSMessageReplyErrorBadJSON(sh, message);
+		goto cleanup;
+	}
 
-    shutdown_state_dispatch(&event);
+	const char *clientId = json_object_get_string(
+	                           json_object_object_get(object, "clientId"));
+
+	if (!clientId)
+	{
+		LSMessageReplyErrorInvalidParams(sh, message);
+		goto cleanup;
+	}
+
+	ShutdownEvent event;
+	event.id = kShutdownEventAck;
+	event.client = client_lookup_app(clientId);
+
+	shutdown_state_dispatch(&event);
 
 cleanup:
-    if (!is_error(object)) json_object_put(object);
-    return true;
+
+	if (!is_error(object))
+	{
+		json_object_put(object);
+	}
+
+	return true;
 }
 
 /**
@@ -867,32 +911,40 @@ cleanup:
 
 static bool
 shutdownServicesAck(LSHandle *sh, LSMessage *message,
-                             void *user_data)
+                    void *user_data)
 {
-    struct json_object *object = json_tokener_parse(
-                                    LSMessageGetPayload(message));
-    if (is_error(object))
-    {
-        LSMessageReplyErrorBadJSON(sh, message);
-        goto cleanup;
-    }
-    const char *clientId = json_object_get_string(
-            json_object_object_get(object, "clientId"));
-    if (!clientId)
-    {
-        LSMessageReplyErrorInvalidParams(sh, message);
-        goto cleanup;
-    }
+	struct json_object *object = json_tokener_parse(
+	                                 LSMessageGetPayload(message));
 
-    ShutdownEvent event;
-    event.id = kShutdownEventAck;
-    event.client = client_lookup_service(clientId);
+	if (is_error(object))
+	{
+		LSMessageReplyErrorBadJSON(sh, message);
+		goto cleanup;
+	}
 
-    shutdown_state_dispatch(&event);
+	const char *clientId = json_object_get_string(
+	                           json_object_object_get(object, "clientId"));
+
+	if (!clientId)
+	{
+		LSMessageReplyErrorInvalidParams(sh, message);
+		goto cleanup;
+	}
+
+	ShutdownEvent event;
+	event.id = kShutdownEventAck;
+	event.client = client_lookup_service(clientId);
+
+	shutdown_state_dispatch(&event);
 
 cleanup:
-    if (!is_error(object)) json_object_put(object);
-    return true;
+
+	if (!is_error(object))
+	{
+		json_object_put(object);
+	}
+
+	return true;
 }
 
 
@@ -909,34 +961,39 @@ static bool
 shutdownApplicationsRegister(LSHandle *sh, LSMessage *message,
                              void *user_data)
 {
-    struct json_object *object =
-        json_tokener_parse(LSMessageGetPayload(message));
-    if (is_error(object)) goto end;
+	struct json_object *object =
+	    json_tokener_parse(LSMessageGetPayload(message));
 
-    const char *clientId = LSMessageGetUniqueToken(message);
-    const char *clientName = json_object_get_string(json_object_object_get(
-        object, "clientName"));
+	if (is_error(object))
+	{
+		goto end;
+	}
 
-    client_new_application(clientId, clientName);
+	const char *clientId = LSMessageGetUniqueToken(message);
+	const char *clientName = json_object_get_string(json_object_object_get(
+	                             object, "clientName"));
 
-    bool retVal;
-    LSError lserror;
-    LSErrorInit(&lserror);
+	client_new_application(clientId, clientName);
 
-    retVal = LSSubscriptionAdd(sh, "shutdownClient",
-                               message, &lserror);
-    if (!retVal)
-    {
-        g_critical("LSSubscriptionAdd failed.");
-        LSErrorPrint(&lserror, stderr);
-        LSErrorFree(&lserror);
-    }
+	bool retVal;
+	LSError lserror;
+	LSErrorInit(&lserror);
 
-    send_reply(sh, message, "{\"clientId\":\"%s\"}", clientId);
+	retVal = LSSubscriptionAdd(sh, "shutdownClient",
+	                           message, &lserror);
 
-    json_object_put(object);
+	if (!retVal)
+	{
+		g_critical("LSSubscriptionAdd failed.");
+		LSErrorPrint(&lserror, stderr);
+		LSErrorFree(&lserror);
+	}
+
+	send_reply(sh, message, "{\"clientId\":\"%s\"}", clientId);
+
+	json_object_put(object);
 end:
-    return true;
+	return true;
 }
 
 /**
@@ -951,36 +1008,41 @@ end:
 
 static bool
 shutdownServicesRegister(LSHandle *sh, LSMessage *message,
-                             void *user_data)
+                         void *user_data)
 {
-    struct json_object *object =
-        json_tokener_parse(LSMessageGetPayload(message));
-    if (is_error(object)) goto end;
+	struct json_object *object =
+	    json_tokener_parse(LSMessageGetPayload(message));
 
-    const char *clientId = LSMessageGetUniqueToken(message);
-    const char *clientName = json_object_get_string(json_object_object_get(
-        object, "clientName"));
+	if (is_error(object))
+	{
+		goto end;
+	}
 
-    client_new_service(clientId, clientName);
+	const char *clientId = LSMessageGetUniqueToken(message);
+	const char *clientName = json_object_get_string(json_object_object_get(
+	                             object, "clientName"));
 
-    bool retVal;
-    LSError lserror;
-    LSErrorInit(&lserror);
+	client_new_service(clientId, clientName);
 
-    retVal = LSSubscriptionAdd(sh, "shutdownClient",
-                             message, &lserror);
-    if (!retVal)
-    {
-        g_critical("LSSubscriptionAdd failed.");
-        LSErrorPrint(&lserror, stderr);
-        LSErrorFree(&lserror);
-    }
+	bool retVal;
+	LSError lserror;
+	LSErrorInit(&lserror);
 
-    send_reply(sh, message, "{\"clientId\":\"%s\"}", clientId);
+	retVal = LSSubscriptionAdd(sh, "shutdownClient",
+	                           message, &lserror);
 
-    json_object_put(object);
+	if (!retVal)
+	{
+		g_critical("LSSubscriptionAdd failed.");
+		LSErrorPrint(&lserror, stderr);
+		LSErrorFree(&lserror);
+	}
+
+	send_reply(sh, message, "{\"clientId\":\"%s\"}", clientId);
+
+	json_object_put(object);
 end:
-    return true;
+	return true;
 }
 
 /**
@@ -992,29 +1054,37 @@ end:
  */
 static bool
 machineOff(LSHandle *sh, LSMessage *message,
-                             void *user_data)
+           void *user_data)
 {
-    struct json_object *object = json_tokener_parse(
-                                    LSMessageGetPayload(message));
-    if (is_error(object))
-    {
-        LSMessageReplyErrorBadJSON(sh, message);
-        goto cleanup;
-    }
-    const char *reason = json_object_get_string(
-            json_object_object_get(object, "reason"));
-    if (!reason)
-    {
-        LSMessageReplyErrorInvalidParams(sh, message);
-        goto cleanup;
-    }
+	struct json_object *object = json_tokener_parse(
+	                                 LSMessageGetPayload(message));
 
-    MachineForceShutdown(reason);
-    LSMessageReplySuccess(sh, message);
+	if (is_error(object))
+	{
+		LSMessageReplyErrorBadJSON(sh, message);
+		goto cleanup;
+	}
+
+	const char *reason = json_object_get_string(
+	                         json_object_object_get(object, "reason"));
+
+	if (!reason)
+	{
+		LSMessageReplyErrorInvalidParams(sh, message);
+		goto cleanup;
+	}
+
+	MachineForceShutdown(reason);
+	LSMessageReplySuccess(sh, message);
 
 cleanup:
-    if (!is_error(object)) json_object_put(object);
-    return true;
+
+	if (!is_error(object))
+	{
+		json_object_put(object);
+	}
+
+	return true;
 }
 
 /**
@@ -1027,84 +1097,94 @@ cleanup:
 
 static bool
 machineReboot(LSHandle *sh, LSMessage *message,
-                             void *user_data)
+              void *user_data)
 {
-    struct json_object *object = json_tokener_parse(
-                                    LSMessageGetPayload(message));
-    if (is_error(object))
-    {
-        LSMessageReplyErrorBadJSON(sh, message);
-        goto cleanup;
-    }
-    const char *reason = json_object_get_string(
-            json_object_object_get(object, "reason"));
-    if (!reason)
-    {
-        LSMessageReplyErrorInvalidParams(sh, message);
-        goto cleanup;
-    }
+	struct json_object *object = json_tokener_parse(
+	                                 LSMessageGetPayload(message));
 
-    MachineForceReboot(reason);
-    LSMessageReplySuccess(sh, message);
+	if (is_error(object))
+	{
+		LSMessageReplyErrorBadJSON(sh, message);
+		goto cleanup;
+	}
+
+	const char *reason = json_object_get_string(
+	                         json_object_object_get(object, "reason"));
+
+	if (!reason)
+	{
+		LSMessageReplyErrorInvalidParams(sh, message);
+		goto cleanup;
+	}
+
+	MachineForceReboot(reason);
+	LSMessageReplySuccess(sh, message);
 
 cleanup:
-    if (!is_error(object)) json_object_put(object);
-    return true;
+
+	if (!is_error(object))
+	{
+		json_object_put(object);
+	}
+
+	return true;
 }
 
-LSMethod shutdown_methods[] = {
-    { "initiate", initiateShutdown, },
+LSMethod shutdown_methods[] =
+{
+	{ "initiate", initiateShutdown, },
 
-    { "shutdownApplicationsRegister", shutdownApplicationsRegister },
-    { "shutdownApplicationsAck", shutdownApplicationsAck },
+	{ "shutdownApplicationsRegister", shutdownApplicationsRegister },
+	{ "shutdownApplicationsAck", shutdownApplicationsAck },
 
-    { "shutdownServicesRegister", shutdownServicesRegister },
-    { "shutdownServicesAck", shutdownServicesAck },
+	{ "shutdownServicesRegister", shutdownServicesRegister },
+	{ "shutdownServicesAck", shutdownServicesAck },
 
-    { "TESTresetShutdownState", TESTresetShutdownState },
+	{ "TESTresetShutdownState", TESTresetShutdownState },
 
-    { "machineOff", machineOff },
-    { "machineReboot", machineReboot },
+	{ "machineOff", machineOff },
+	{ "machineReboot", machineReboot },
 
-    { },
+	{ },
 };
 
-LSSignal shutdown_signals[] = {
-    { "shutdownApplications" },
-    { "shutdownServices" },
-    { },
+LSSignal shutdown_signals[] =
+{
+	{ "shutdownApplications" },
+	{ "shutdownServices" },
+	{ },
 };
 
 static int
 shutdown_init(void)
 {
-    sClientList = g_new0(ShutdownClientList, 1);
-    sClientList->applications = g_hash_table_new_full(g_str_hash, g_str_equal,
-                        NULL, (GDestroyNotify)client_free);
-    sClientList->services = g_hash_table_new_full(g_str_hash, g_str_equal,
-                        NULL, (GDestroyNotify)client_free);
-    sClientList->num_ack = 0;
-    sClientList->num_nack = 0;
+	sClientList = g_new0(ShutdownClientList, 1);
+	sClientList->applications = g_hash_table_new_full(g_str_hash, g_str_equal,
+	                            NULL, (GDestroyNotify)client_free);
+	sClientList->services = g_hash_table_new_full(g_str_hash, g_str_equal,
+	                        NULL, (GDestroyNotify)client_free);
+	sClientList->num_ack = 0;
+	sClientList->num_nack = 0;
 
-    shutdown_timer = g_timer_new();
+	shutdown_timer = g_timer_new();
 
-    gCurrentState = &kStateMachine[kPowerShutdownNone];
+	gCurrentState = &kStateMachine[kPowerShutdownNone];
 
-    LSError lserror;
-    LSErrorInit(&lserror);
+	LSError lserror;
+	LSErrorInit(&lserror);
 
-    if (!LSRegisterCategory(GetLunaServiceHandle(),
-            "/shutdown", shutdown_methods, shutdown_signals, NULL, &lserror))
-    {
-        goto error;
-    }
+	if (!LSRegisterCategory(GetLunaServiceHandle(),
+	                        "/shutdown", shutdown_methods, shutdown_signals, NULL, &lserror))
+	{
+		goto error;
+	}
 
-    return 0;
+	return 0;
 
 error:
-    LSErrorPrint(&lserror, stderr);
-    LSErrorFree(&lserror);
-    return -1;
+	LSErrorPrint(&lserror, stderr);
+	LSErrorFree(&lserror);
+	return -1;
 }
 
 INIT_FUNC(INIT_FUNC_MIDDLE, shutdown_init);

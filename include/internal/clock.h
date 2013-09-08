@@ -36,10 +36,10 @@ void ClockPrint(void);
 void ClockDiff(struct timespec *diff, struct timespec *a, struct timespec *b);
 void ClockAccum(struct timespec *sum, struct timespec *b);
 
-void ClockAccumMs (struct timespec *sum, int duration_ms);
+void ClockAccumMs(struct timespec *sum, int duration_ms);
 
 long ClockGetMs(struct timespec *ts);
 
 void ClockClear(struct timespec *a);
 
-#endif	// _CLOCK_H_
+#endif  // _CLOCK_H_

@@ -29,11 +29,11 @@
 #include <luna-service2/lunaservice.h>
 #include <nyx/nyx_client.h>
 
-GMainContext * GetMainLoopContext(void);
+GMainContext *GetMainLoopContext(void);
 
-LSHandle * GetLunaServiceHandle(void);
+LSHandle *GetLunaServiceHandle(void);
 
-LSPalmService * GetPalmService(void);
+LSPalmService *GetPalmService(void);
 
 nyx_device_handle_t GetNyxSystemDevice(void);
 

@@ -38,21 +38,23 @@
 
 struct _GTimerSource
 {
-    GSource  source;
-    GTimeVal expiration;   /* Should I just make this use Clock* API? */
-    guint    interval_ms;     /* In milisecs */
-    guint    granularity;
+	GSource  source;
+	GTimeVal expiration;   /* Should I just make this use Clock* API? */
+	guint    interval_ms;     /* In milisecs */
+	guint    granularity;
 };
 
 static gboolean g_timer_source_prepare(GSource *source, gint *timeout_ms);
 static gboolean g_timer_source_check(GSource *source);
-static gboolean g_timer_source_dispatch(GSource *source, GSourceFunc callback, gpointer user_data);
+static gboolean g_timer_source_dispatch(GSource *source, GSourceFunc callback,
+                                        gpointer user_data);
 
-GSourceFuncs g_timer_source_funcs= {
-    .prepare  = g_timer_source_prepare,
-    .check    = g_timer_source_check,
-    .dispatch = g_timer_source_dispatch,
-    .finalize = NULL,
+GSourceFuncs g_timer_source_funcs =
+{
+	.prepare  = g_timer_source_prepare,
+	.check    = g_timer_source_check,
+	.dispatch = g_timer_source_dispatch,
+	.finalize = NULL,
 };
 
 #define USECS_PER_SEC 1000000
@@ -60,206 +62,214 @@ GSourceFuncs g_timer_source_funcs= {
 static void
 g_timer_set_expiration(GTimerSource *rsource, GTimeVal *now)
 {
-    guint interval_secs = rsource->interval_ms / 1000;
-    glong interval_usecs = (rsource->interval_ms - interval_secs * 1000) * 1000;
+	guint interval_secs = rsource->interval_ms / 1000;
+	glong interval_usecs = (rsource->interval_ms - interval_secs * 1000) * 1000;
 
-    rsource->expiration.tv_sec = now->tv_sec + interval_secs;
-    rsource->expiration.tv_usec = now->tv_usec + interval_usecs;
+	rsource->expiration.tv_sec = now->tv_sec + interval_secs;
+	rsource->expiration.tv_usec = now->tv_usec + interval_usecs;
 
-    if (rsource->expiration.tv_usec >= USECS_PER_SEC)
-    {
-        rsource->expiration.tv_usec -= USECS_PER_SEC;
-        rsource->expiration.tv_sec++;     
-    }
+	if (rsource->expiration.tv_usec >= USECS_PER_SEC)
+	{
+		rsource->expiration.tv_usec -= USECS_PER_SEC;
+		rsource->expiration.tv_sec++;
+	}
 
-    if (rsource->granularity)
-    {
-        gint gran;
-        gint remainder;
+	if (rsource->granularity)
+	{
+		gint gran;
+		gint remainder;
 
-        gran = rsource->granularity * USECS_PER_MSEC;
-        remainder = rsource->expiration.tv_usec % gran;
+		gran = rsource->granularity * USECS_PER_MSEC;
+		remainder = rsource->expiration.tv_usec % gran;
 
-        if (remainder >= gran / 4)
-            rsource->expiration.tv_usec += gran;
+		if (remainder >= gran / 4)
+		{
+			rsource->expiration.tv_usec += gran;
+		}
 
-        rsource->expiration.tv_usec -= remainder;
+		rsource->expiration.tv_usec -= remainder;
 
-        while (rsource->expiration.tv_usec > USECS_PER_SEC)
-        {
-            rsource->expiration.tv_usec -= USECS_PER_SEC;
-            rsource->expiration.tv_sec++;
-        }
-    }
+		while (rsource->expiration.tv_usec > USECS_PER_SEC)
+		{
+			rsource->expiration.tv_usec -= USECS_PER_SEC;
+			rsource->expiration.tv_sec++;
+		}
+	}
 }
 
 static void
 g_timer_get_current_time(GTimerSource *tsource, GTimeVal *now)
 {
-    g_return_if_fail (now != NULL);
+	g_return_if_fail(now != NULL);
 
-    // TODO: We should do a time_is_current and skip syscalls
-    struct timespec tv;
-    ClockGetTime(&tv);
+	// TODO: We should do a time_is_current and skip syscalls
+	struct timespec tv;
+	ClockGetTime(&tv);
 
-    now->tv_sec = tv.tv_sec;
-    now->tv_usec = tv.tv_nsec / 1000;
+	now->tv_sec = tv.tv_sec;
+	now->tv_usec = tv.tv_nsec / 1000;
 }
 
 static gboolean
 g_timer_source_prepare(GSource    *source,
-                     gint       *timeout_ms)
+                       gint       *timeout_ms)
 {
-    GTimeVal now;
+	GTimeVal now;
 
-    GTimerSource *tsource = (GTimerSource*)source;
+	GTimerSource *tsource = (GTimerSource *)source;
 
-    g_timer_get_current_time (tsource, &now);
+	g_timer_get_current_time(tsource, &now);
 
-    // assume monotic clock
+	// assume monotic clock
 
-    glong msec = (tsource->expiration.tv_sec - now.tv_sec) * 1000;
-    if (msec < 0)
-    {
-        msec = 0;
-    }
-    else
-    {
-        msec += (tsource->expiration.tv_usec - now.tv_usec)/1000;
-        if (msec < 0)
-        {
-            msec = 0;
-        }
-    }
+	glong msec = (tsource->expiration.tv_sec - now.tv_sec) * 1000;
 
-    *timeout_ms = (gint)msec;
+	if (msec < 0)
+	{
+		msec = 0;
+	}
+	else
+	{
+		msec += (tsource->expiration.tv_usec - now.tv_usec) / 1000;
 
-    return (msec == 0);
+		if (msec < 0)
+		{
+			msec = 0;
+		}
+	}
+
+	*timeout_ms = (gint)msec;
+
+	return (msec == 0);
 }
 
 static gboolean
 g_timer_source_check(GSource *source)
 {
-    GTimeVal now;
-    GTimerSource *tsource = (GTimerSource*)source;
+	GTimeVal now;
+	GTimerSource *tsource = (GTimerSource *)source;
 
-    g_timer_get_current_time(tsource, &now);
+	g_timer_get_current_time(tsource, &now);
 
-    return (tsource->expiration.tv_sec < now.tv_sec) ||
-        ((tsource->expiration.tv_sec == now.tv_sec) &&
-         (tsource->expiration.tv_usec <= now.tv_usec));
+	return (tsource->expiration.tv_sec < now.tv_sec) ||
+	       ((tsource->expiration.tv_sec == now.tv_sec) &&
+	        (tsource->expiration.tv_usec <= now.tv_usec));
 }
 
 static gboolean
 g_timer_source_dispatch(GSource *source,
                         GSourceFunc callback, gpointer user_data)
 {
-    GTimerSource *tsource = (GTimerSource*)source;
+	GTimerSource *tsource = (GTimerSource *)source;
 
-    if (!callback)
-    {
-        g_warning("Timeout source dispatched without callback\n"
-            "Call g_source_set_callback().");
-        return FALSE;
-    }
+	if (!callback)
+	{
+		g_warning("Timeout source dispatched without callback\n"
+		          "Call g_source_set_callback().");
+		return FALSE;
+	}
 
-    if (callback(user_data))
-    {
-        GTimeVal now;
-        g_timer_get_current_time(tsource, &now);
-        g_timer_set_expiration(tsource, &now);
-        return TRUE;
-    }
-    else
-    {
-        return FALSE;
-    }
+	if (callback(user_data))
+	{
+		GTimeVal now;
+		g_timer_get_current_time(tsource, &now);
+		g_timer_set_expiration(tsource, &now);
+		return TRUE;
+	}
+	else
+	{
+		return FALSE;
+	}
 }
 
 /** Public Functions */
 
-/** 
+/**
 * @brief A create a timer with 100 ms resolution.
-* 
-* @param  interval_ms 
-* 
+*
+* @param  interval_ms
+*
 * @retval
 */
 GTimerSource *
 g_timer_source_new(guint interval_ms, guint granularity_ms)
 {
-    GSource *source;
-    GTimerSource *tsource;
+	GSource *source;
+	GTimerSource *tsource;
 
-    source = g_source_new(&g_timer_source_funcs, sizeof(GTimerSource));
-    tsource = (GTimerSource*)source;
+	source = g_source_new(&g_timer_source_funcs, sizeof(GTimerSource));
+	tsource = (GTimerSource *)source;
 
-    GTimeVal now;
+	GTimeVal now;
 
-    tsource->interval_ms = interval_ms;
-    tsource->granularity = granularity_ms;
+	tsource->interval_ms = interval_ms;
+	tsource->granularity = granularity_ms;
 
-    g_timer_get_current_time(tsource, &now);
+	g_timer_get_current_time(tsource, &now);
 
-    g_timer_set_expiration(tsource, &now);
+	g_timer_set_expiration(tsource, &now);
 
-    return tsource;
+	return tsource;
 }
 
 GTimerSource *
 g_timer_source_new_seconds(guint interval_sec)
 {
-    GSource *source;
-    GTimerSource *tsource;
+	GSource *source;
+	GTimerSource *tsource;
 
-    source = g_source_new(&g_timer_source_funcs, sizeof(GTimerSource));
-    tsource = (GTimerSource*)source;
+	source = g_source_new(&g_timer_source_funcs, sizeof(GTimerSource));
+	tsource = (GTimerSource *)source;
 
-    GTimeVal now;
+	GTimeVal now;
 
-    tsource->interval_ms = 1000*interval_sec;
-    tsource->granularity = 1000;
+	tsource->interval_ms = 1000 * interval_sec;
+	tsource->granularity = 1000;
 
-    g_timer_get_current_time(tsource, &now);
+	g_timer_get_current_time(tsource, &now);
 
-    g_timer_set_expiration(tsource, &now);
+	g_timer_set_expiration(tsource, &now);
 
-    return tsource;
+	return tsource;
 }
 
 void
-g_timer_source_set_interval_seconds(GTimerSource *tsource, guint interval_sec, gboolean from_poll)
+g_timer_source_set_interval_seconds(GTimerSource *tsource, guint interval_sec,
+                                    gboolean from_poll)
 {
-    g_timer_source_set_interval(tsource, interval_sec * 1000, from_poll);
+	g_timer_source_set_interval(tsource, interval_sec * 1000, from_poll);
 }
 
 void
-g_timer_source_set_interval(GTimerSource *tsource, guint interval_ms, gboolean from_poll)
+g_timer_source_set_interval(GTimerSource *tsource, guint interval_ms,
+                            gboolean from_poll)
 {
-    GTimeVal now;
+	GTimeVal now;
 
-    g_timer_get_current_time(tsource, &now);
+	g_timer_get_current_time(tsource, &now);
 
-    tsource->interval_ms = interval_ms;
-    g_timer_set_expiration(tsource, &now);
+	tsource->interval_ms = interval_ms;
+	g_timer_set_expiration(tsource, &now);
 
-    if (!from_poll)
-    {
-        GMainContext *context =  g_source_get_context((GSource*)tsource);
-        if (!context)
-        {
-            g_critical("Cannot get context for timer_source.\n"
-                       "Maybe you didn't call g_source_attach()\n");
-            return;
-        }
-        g_main_context_wakeup(context); 
-    }
+	if (!from_poll)
+	{
+		GMainContext *context =  g_source_get_context((GSource *)tsource);
+
+		if (!context)
+		{
+			g_critical("Cannot get context for timer_source.\n"
+			           "Maybe you didn't call g_source_attach()\n");
+			return;
+		}
+
+		g_main_context_wakeup(context);
+	}
 }
 
 guint
 g_timer_source_get_interval_ms(GTimerSource *tsource)
 {
-    return tsource->interval_ms;
+	return tsource->interval_ms;
 }
 
 

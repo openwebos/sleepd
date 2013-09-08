@@ -22,7 +22,8 @@
 
 void TheOneInit(void);
 
-enum {
+enum
+{
     INIT_FUNC_FIRST  = 0,
     INIT_FUNC_EARLY  = 10,
     INIT_FUNC_MIDDLE = 50,
@@ -32,7 +33,8 @@ typedef int InitFuncPriority;
 
 typedef int (*InitFunc)(void);
 
-void NamedInitFuncAdd(const char *initListName, InitFuncPriority priority, InitFunc func, const char *func_name);
+void NamedInitFuncAdd(const char *initListName, InitFuncPriority priority,
+                      InitFunc func, const char *func_name);
 
 #define COMMON_INIT_NAME "init-common"
 /**

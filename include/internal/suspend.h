@@ -21,10 +21,11 @@
 #define _SUSPEND_H_
 
 #include <luna-service2/lunaservice.h>
-/** 
+/**
  * @brief If from batterycheck, the reason why we woke up.
  */
-enum {
+enum
+{
     BATTERYCHECK_NONE = 0,
     BATTERYCHECK_THRESHOLD_CHANGED,
     BATTERYCHECK_CRITICAL_LOW_BATTERY,
@@ -32,7 +33,8 @@ enum {
     BATTERYCHECK_END,
 };
 
-enum {
+enum
+{
     kPowerEventNone,
     kPowerEventForceSuspend,
     kPowerEventIdleEvent,
@@ -42,7 +44,7 @@ typedef int PowerEvent;
 void ScheduleIdleCheck(int interval_ms, bool fromPoll);
 void TriggerSuspend(const char *cause, PowerEvent power_event);
 bool GetSuspendSettings(LSHandle *sh, LSMessage *message, void *ctx);
-bool DisplayStatus(LSHandle *sh,LSMessage *message, void *user_data);
+bool DisplayStatus(LSHandle *sh, LSMessage *message, void *user_data);
 int com_palm_suspend_lunabus_init(void);
 void switchoffDisplay(void);
 

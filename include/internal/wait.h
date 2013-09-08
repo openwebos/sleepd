@@ -26,11 +26,11 @@
 
 typedef struct
 {
-    pthread_condattr_t condattr;
-    pthread_cond_t     cond;
-    pthread_mutex_t    mutex;
+	pthread_condattr_t condattr;
+	pthread_cond_t     cond;
+	pthread_mutex_t    mutex;
 
-    bool               locked;
+	bool               locked;
 } WaitObj;
 
 void WaitObjectInit(WaitObj *obj);

@@ -21,34 +21,36 @@
 #ifndef _TIMEOUT_ALARM_H
 #define _TIMEOUT_ALARM_H
 
-typedef struct _AlarmTimeout {
-    const char *table_id;
+typedef struct _AlarmTimeout
+{
+	const char *table_id;
 
-    const char *app_id;
-    const char *key;
-    const char *uri;
-    const char *params;
-    const char *activity_id;
-    int activity_duration_ms;
-    bool        public_bus;
-    bool        wakeup;
-    bool        calendar;
-    time_t      expiry;
+	const char *app_id;
+	const char *key;
+	const char *uri;
+	const char *params;
+	const char *activity_id;
+	int activity_duration_ms;
+	bool        public_bus;
+	bool        wakeup;
+	bool        calendar;
+	time_t      expiry;
 } _AlarmTimeout;
 
-typedef struct _AlarmTimeoutNonConst {
-    char *table_id;
+typedef struct _AlarmTimeoutNonConst
+{
+	char *table_id;
 
-    char *app_id;
-    char *key;
-    char *uri;
-    char *params;
-    char *activity_id;
-    int activity_duration_ms;
-    bool        public_bus;
-    bool        wakeup;
-    bool        calendar;
-    time_t      expiry;
+	char *app_id;
+	char *key;
+	char *uri;
+	char *params;
+	char *activity_id;
+	int activity_duration_ms;
+	bool        public_bus;
+	bool        wakeup;
+	bool        calendar;
+	time_t      expiry;
 } _AlarmTimeoutNonConst;
 
 time_t rtc_wall_time(void);
@@ -56,16 +58,17 @@ time_t rtc_wall_time(void);
 void _free_timeout_fields(_AlarmTimeoutNonConst *timeout);
 
 void _timeout_create(_AlarmTimeout *timeout,
-        const char *app_id, const char *key,
-        const char *uri, const char *params,
-        bool public_bus, bool wakeup,
-        const char *activity_id,
-        int activity_duration_ms,
-        bool calendar, time_t expiry);
+                     const char *app_id, const char *key,
+                     const char *uri, const char *params,
+                     bool public_bus, bool wakeup,
+                     const char *activity_id,
+                     int activity_duration_ms,
+                     bool calendar, time_t expiry);
 
 bool _timeout_set(_AlarmTimeout *timeout);
 
-bool _timeout_read(_AlarmTimeoutNonConst *timeout, const char *app_id, const char *key, bool public_bus);
+bool _timeout_read(_AlarmTimeoutNonConst *timeout, const char *app_id,
+                   const char *key, bool public_bus);
 
 bool _timeout_clear(const char *app_id, const char *key, bool public_bus);
 
