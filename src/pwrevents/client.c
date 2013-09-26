@@ -238,24 +238,11 @@ PwrEventClientTableDestroy(void)
 struct PwrEventClientInfo *
 PwrEventClientLookup(ClientUID uid)
 {
-	if (NULL == uid)
-	{
-		return NULL;
-	}
-
-	struct PwrEventClientInfo *clientInfo;
-
-	clientInfo = (struct PwrEventClientInfo *)
-	             g_hash_table_lookup(sClientList, uid);
-
-	if (!clientInfo)
-	{
-		goto error;
-	}
-
+	struct PwrEventClientInfo *clientInfo = NULL;
+	if (uid)
+		clientInfo = (struct PwrEventClientInfo *)
+		             g_hash_table_lookup(sClientList, uid);
 	return clientInfo;
-error:
-	return NULL;
 }
 
 /**

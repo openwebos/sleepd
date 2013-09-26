@@ -120,7 +120,7 @@ void read_lvdisplay(char **buf)
 
 	//  g_message("%s: i is: %d",__func__,i);
 
-
+        pclose(stream);
 
 }
 

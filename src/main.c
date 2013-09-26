@@ -190,78 +190,74 @@ main(int argc, char **argv)
 	 */
 	retVal = LSRegisterPalmService("com.palm.sleep", &psh, &lserror);
 
-	if (!retVal)
+	if (retVal)
 	{
-		goto ls_error;
+		/*
+		 * Attach our main loop to the service so we can process IPC messages addressed to us.
+		 */
+		retVal = LSGmainAttachPalmService(psh, mainloop, &lserror);
+
+		if (retVal)
+		{
+
+			/*
+			 * Get our private bus for our service so we can pass a message to com.palm.power.
+			 */
+			private_sh = LSPalmServiceGetPrivateConnection(psh);
+
+			/*
+			 * Register with com.palm.power for events regarding changes in status
+			 * to the plug/unplug state of any chargers which may be attached to our
+			 * device.
+			 */
+			retVal = LSCall(private_sh, "luna://com.palm.lunabus/signal/addmatch",
+				        "{\"category\":\"/com/palm/power\","
+				        "\"method\":\"USBDockStatus\"}", ChargerStatus, NULL, NULL, &lserror);
+
+			if (retVal)
+			{
+				/*
+				 * Connect to Nyx so we can use it later.
+				 */
+				int ret = nyx_device_open(NYX_DEVICE_SYSTEM, "Main", &nyxSystem);
+
+				if (ret != NYX_ERROR_NONE)
+				{
+					SLEEPDLOG(LOG_CRIT, "Sleepd: Unable to open the nyx device system");
+					abort();
+				}
+
+
+				/*
+				 * Call our main initialization function - this is the function which
+				 * is supposed to handle initializing pretty much everything for us.
+				 */
+				TheOneInit();
+
+				/*
+				 * Now that we've got something listening for charger status changes,
+				 * request the current state of the charger from com.palm.power.
+				 */
+				LSCall(private_sh, "luna://com.palm.power/com/palm/power/chargerStatusQuery",
+				        "{}", ChargerStatus, NULL, NULL, &lserror);
+
+				SLEEPDLOG(LOG_INFO, "Sleepd daemon started\n");
+
+				g_main_loop_run(mainloop);
+			}
+			else
+			{
+				SLEEPDLOG(LOG_CRIT, "Error in registering for luna-signal \"chargerStatus\"");
+			}
+		}
 	}
-
-	/*
-	 * Attach our main loop to the service so we can process IPC messages addressed to us.
-	 */
-	retVal = LSGmainAttachPalmService(psh, mainloop, &lserror);
-
-	if (!retVal)
+	else
 	{
-		goto ls_error;
+		SLEEPDLOG(LOG_CRIT,
+		        "Fatal - Could not initialize sleepd.  Is LunaService Down?. %s",
+		        lserror.message);
+		LSErrorFree(&lserror);
 	}
-
-	/*
-	 * Get our private bus for our service so we can pass a message to com.palm.power.
-	 */
-	private_sh = LSPalmServiceGetPrivateConnection(psh);
-
-	/*
-	 * Register with com.palm.power for events regarding changes in status
-	 * to the plug/unplug state of any chargers which may be attached to our
-	 * device.
-	 */
-	retVal = LSCall(private_sh, "luna://com.palm.lunabus/signal/addmatch",
-	                "{\"category\":\"/com/palm/power\","
-	                "\"method\":\"USBDockStatus\"}", ChargerStatus, NULL, NULL, &lserror);
-
-	if (!retVal)
-	{
-		SLEEPDLOG(LOG_CRIT, "Error in registering for luna-signal \"chargerStatus\"");
-		goto ls_error;
-	}
-
-	/*
-	 * Connect to Nyx so we can use it later.
-	 */
-	int ret = nyx_device_open(NYX_DEVICE_SYSTEM, "Main", &nyxSystem);
-
-	if (ret != NYX_ERROR_NONE)
-	{
-		SLEEPDLOG(LOG_CRIT, "Sleepd: Unable to open the nyx device system");
-		abort();
-	}
-
-
-	/*
-	 * Call our main initialization function - this is the function which
-	 * is supposed to handle initializing pretty much everything for us.
-	 */
-	TheOneInit();
-
-	/*
-	 * Now that we've got something listening for charger status changes,
-	 * request the current state of the charger from com.palm.power.
-	 */
-	LSCall(private_sh, "luna://com.palm.power/com/palm/power/chargerStatusQuery",
-	       "{}", ChargerStatus, NULL, NULL, &lserror);
-
-	SLEEPDLOG(LOG_INFO, "Sleepd daemon started\n");
-
-	g_main_loop_run(mainloop);
-
-end:
 	g_main_loop_unref(mainloop);
-
 	return 0;
-ls_error:
-	SLEEPDLOG(LOG_CRIT,
-	          "Fatal - Could not initialize sleepd.  Is LunaService Down?. %s",
-	          lserror.message);
-	LSErrorFree(&lserror);
-	goto end;
 }

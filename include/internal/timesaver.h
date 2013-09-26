@@ -21,5 +21,6 @@
 #define _TIMESAVER_H_
 
 void timesaver_save();
+bool ConvertJsonTime(const char *time, int *hour, int *minute, int *second);
 
 #endif

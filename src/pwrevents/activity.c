@@ -227,15 +227,14 @@ _activity_insert(const char *activity_id, int duration_ms)
 	if (gFrozen)
 	{
 		ret = false;
-		goto end;
 	}
+	else
+	{
+		Activity *activity = _activity_new(activity_id, duration_ms);
 
-	Activity *activity = _activity_new(activity_id, duration_ms);
-
-	g_queue_insert_sorted(activity_roster, activity,
-	                      (GCompareDataFunc)_activity_compare, NULL);
-
-end:
+		g_queue_insert_sorted(activity_roster, activity,
+		                      (GCompareDataFunc)_activity_compare, NULL);
+	}
 	pthread_mutex_unlock(&activity_mutex);
 	return ret;
 }

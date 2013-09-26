@@ -286,84 +286,84 @@ IdleCheck(gpointer ctx)
 	struct timespec now;
 	int next_idle_ms = 0;
 
-	if (IsDisplayOn())
+	if (!IsDisplayOn())
 	{
-		goto resched;
-	}
 
-	ClockGetTime(&now);
+		ClockGetTime(&now);
 
-	/*
-	 * Enforce that the minimum time awake must be at least
-	 * after_resume_idle_ms.
-	 */
-	struct timespec last_wake;
-	last_wake.tv_sec = sTimeOnWake.tv_sec;
-	last_wake.tv_nsec = sTimeOnWake.tv_nsec;
+		/*
+		 * Enforce that the minimum time awake must be at least
+		 * after_resume_idle_ms.
+		 */
+		struct timespec last_wake;
+		last_wake.tv_sec = sTimeOnWake.tv_sec;
+		last_wake.tv_nsec = sTimeOnWake.tv_nsec;
 
-	ClockAccumMs(&last_wake, gSleepConfig.after_resume_idle_ms);
+		ClockAccumMs(&last_wake, gSleepConfig.after_resume_idle_ms);
 
-	if (ClockTimeIsGreater(&last_wake, &now))
-	{
-		struct timespec diff;
-		ClockDiff(&diff, &last_wake, &now);
-		next_idle_ms = ClockGetMs(&diff);
-		goto resched;
-	}
-
-	/*
-	 * Do not sleep if any activity is still active
-	 */
-
-	activity_idle = PwrEventActivityCanSleep(&now);
-
-	if (!activity_idle)
-	{
-		SLEEPDLOG(LOG_WARNING,
-		          "%s: can't sleep because an activity is active: ",
-		          __FUNCTION__);
-	}
-
-	if (PwrEventActivityCount(&sTimeOnWake))
-	{
-		SLEEPDLOG(LOG_INFO, "Activities since wake: ");
-		PwrEventActivityPrintFrom(&sTimeOnWake);
-	}
-
-	PwrEventActivityRemoveExpired(&now);
-
-	{
-		time_t expiry = 0;
-		gchar *app_id = NULL;
-		gchar *key = NULL;
-
-		if (timeout_get_next_wakeup(&expiry, &app_id, &key))
+		if (!ClockTimeIsGreater(&last_wake, &now))
 		{
-			g_free(app_id);
-			g_free(key);
-			int next_wake = expiry - rtc_wall_time();
+			/*
+			 * Do not sleep if any activity is still active
+			 */
 
-			if (next_wake >= 0 && next_wake <= gSleepConfig.wait_alarms_s)
+			activity_idle = PwrEventActivityCanSleep(&now);
+
+			if (!activity_idle)
 			{
-				SLEEPDLOG(LOG_DEBUG, "%s: Not going to sleep because an alarm is "
-				          "about to fire in %d sec\n", __func__, next_wake);
-				goto resched;
+				SLEEPDLOG(LOG_DEBUG,
+				          "%s: can't sleep because an activity is active: ",
+				          __FUNCTION__);
+			}
+
+			if (PwrEventActivityCount(&sTimeOnWake))
+			{
+				SLEEPDLOG(LOG_INFO, "Activities since wake: ");
+				PwrEventActivityPrintFrom(&sTimeOnWake);
+			}
+
+			PwrEventActivityRemoveExpired(&now);
+
+			{
+				time_t expiry = 0;
+				gchar *app_id = NULL;
+				gchar *key = NULL;
+
+				if (timeout_get_next_wakeup(&expiry, &app_id, &key))
+				{
+					g_free(app_id);
+					g_free(key);
+					int next_wake = expiry - rtc_wall_time();
+
+					if (next_wake >= 0 && next_wake <= gSleepConfig.wait_alarms_s)
+					{
+						SLEEPDLOG(LOG_DEBUG, "%s: Not going to sleep because an alarm is "
+						          "about to fire in %d sec\n", __func__, next_wake);
+						goto resched;
+					}
+				}
+
+			}
+
+			/*
+			 * Wait for LunaSysMgr to deposit suspend_active token
+			 * to signify that the system is completely booted and ready for
+			 * suspend activity.
+			 */
+
+			suspend_active = (access("/tmp/suspend_active", R_OK) == 0);
+
+			if (suspend_active && activity_idle)
+			{
+				TriggerSuspend("device is idle.", kPowerEventIdleEvent);
 			}
 		}
-
-	}
-
-	/*
-	 * Wait for LunaSysMgr to deposit suspend_active token
-	 * to signify that the system is completely booted and ready for
-	 * suspend activity.
-	 */
-
-	suspend_active = (access("/tmp/suspend_active", R_OK) == 0);
-
-	if (suspend_active && activity_idle)
-	{
-		TriggerSuspend("device is idle.", kPowerEventIdleEvent);
+		else
+		{
+			struct timespec diff;
+			ClockDiff(&diff, &last_wake, &now);
+			next_idle_ms = ClockGetMs(&diff);
+		}
 	}
 
 resched:
@@ -792,26 +792,27 @@ StateSleep(void)
 		          "%s: aborting sleep because of current activity: ", __FUNCTION__);
 		PwrEventActivityPrintFrom(&sTimeOnSuspended);
 		nextState = kPowerStateActivityResume;
-		goto resume;
 	}
 
-	if (MachineCanSleep())
-	{
-		// let the system sleep now.
-		_queue_next_timeout(false);
-		MachineSleep();
-	}
 	else
 	{
-		SLEEPDLOG(LOG_INFO,
-		          "We couldn't sleep because a new gadget_event was received");
-		nextState = kPowerStateAbortSuspend;
+		if (MachineCanSleep())
+		{
+			// let the system sleep now.
+			_queue_next_timeout(false);
+			MachineSleep();
+		}
+		else
+		{
+			SLEEPDLOG(LOG_INFO,
+			          "We couldn't sleep because a new gadget_event was received");
+			nextState = kPowerStateAbortSuspend;
+		}
+
+		// We woke up from sleep.
+		PwrEventThawActivities();
 	}
 
-	// We woke up from sleep.
-	PwrEventThawActivities();
-
-resume:
 	return nextState;
 }
 

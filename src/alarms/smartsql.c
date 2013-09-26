@@ -185,9 +185,11 @@ smart_sql_open(const char *path, sqlite3 **ret_db)
 		_close(db);
 
 		char *journal = g_strdup_printf("%s-journal", path);
-		remove(journal);
+                if ( journal != NULL )
+		    remove(journal);
 		remove(path);
-		g_free(journal);
+                if ( journal != NULL )
+		    g_free(journal);
 
 		db = _open(path);
 

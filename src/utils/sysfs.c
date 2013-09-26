@@ -94,15 +94,15 @@ SysfsGetInt(const char *path, int *ret_data)
 	{
 		SLEEPDLOG(LOG_CRIT, "%s: Invalid input in %s.",
 		          __FUNCTION__, path);
-		goto end;
 	}
-
-	if (ret_data)
+	else
 	{
-		*ret_data = val;
+		if (ret_data)
+		{
+			*ret_data = val;
+		}
 	}
 
-end:
 	g_free(contents);
 	return 0;
 }
@@ -133,15 +133,15 @@ SysfsGetDouble(const char *path, double *ret_data)
 	{
 		SLEEPDLOG(LOG_CRIT, "%s: Invalid input in %s.",
 		          __FUNCTION__, path);
-		goto end;
 	}
-
-	if (ret_data)
+	else
 	{
-		*ret_data = val;
+		if (ret_data)
+		{
+			*ret_data = val;
+		}
 	}
 
-end:
 	g_free(contents);
 	return 0;
 }

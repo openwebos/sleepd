@@ -120,42 +120,43 @@ config_init(void)
 	retVal = g_key_file_load_from_file(config_file, config_path,
 	                                   G_KEY_FILE_NONE, NULL);
 
-	if (!retVal)
+	if (retVal)
+	{
+
+		/// [general]
+		CONFIG_GET_INT(config_file, "general", "debug", gSleepConfig.debug);
+
+
+		/// [suspend]
+		CONFIG_GET_INT(config_file, "suspend", "wait_idle_ms",
+		               gSleepConfig.wait_idle_ms);
+		CONFIG_GET_INT(config_file, "suspend", "after_resume_idle_ms",
+		               gSleepConfig.after_resume_idle_ms);
+		CONFIG_GET_INT(config_file, "suspend", "wait_suspend_response_ms",
+		               gSleepConfig.wait_suspend_response_ms);
+		CONFIG_GET_INT(config_file, "suspend", "wait_prepare_suspend_ms",
+		               gSleepConfig.wait_prepare_suspend_ms);
+		CONFIG_GET_BOOL(config_file, "suspend", "wait_alarms_ms",
+		                gSleepConfig.wait_alarms_s);
+
+		CONFIG_GET_BOOL(config_file, "suspend", "suspend_with_charger",
+		                gSleepConfig.suspend_with_charger);
+
+		CONFIG_GET_BOOL(config_file, "suspend", "disable_rtc_alarms",
+		                gSleepConfig.disable_rtc_alarms);
+
+		CONFIG_GET_BOOL(config_file, "suspend", "visual_leds_suspend",
+		                gSleepConfig.visual_leds_suspend);
+
+		CONFIG_GET_BOOL(config_file, "suspend", "fasthalt",
+		                gSleepConfig.fasthalt);
+	}
+	else
 	{
 		g_warning("%s cannot load config file from %s",
 		          __FUNCTION__, config_path);
-		goto end;
 	}
 
-	/// [general]
-	CONFIG_GET_INT(config_file, "general", "debug", gSleepConfig.debug);
-
-
-	/// [suspend]
-	CONFIG_GET_INT(config_file, "suspend", "wait_idle_ms",
-	               gSleepConfig.wait_idle_ms);
-	CONFIG_GET_INT(config_file, "suspend", "after_resume_idle_ms",
-	               gSleepConfig.after_resume_idle_ms);
-	CONFIG_GET_INT(config_file, "suspend", "wait_suspend_response_ms",
-	               gSleepConfig.wait_suspend_response_ms);
-	CONFIG_GET_INT(config_file, "suspend", "wait_prepare_suspend_ms",
-	               gSleepConfig.wait_prepare_suspend_ms);
-	CONFIG_GET_BOOL(config_file, "suspend", "wait_alarms_ms",
-	                gSleepConfig.wait_alarms_s);
-
-	CONFIG_GET_BOOL(config_file, "suspend", "suspend_with_charger",
-	                gSleepConfig.suspend_with_charger);
-
-	CONFIG_GET_BOOL(config_file, "suspend", "disable_rtc_alarms",
-	                gSleepConfig.disable_rtc_alarms);
-
-	CONFIG_GET_BOOL(config_file, "suspend", "visual_leds_suspend",
-	                gSleepConfig.visual_leds_suspend);
-
-	CONFIG_GET_BOOL(config_file, "suspend", "fasthalt",
-	                gSleepConfig.fasthalt);
-
-end:
 	g_free(config_path);
 
 	if (config_file)

@@ -304,22 +304,18 @@ bool ChargerStatus(LSHandle *sh,
 	struct json_object *object;
 	object = json_tokener_parse(LSMessageGetPayload(message));
 
-	if (NULL == object)
+	if (object)
 	{
-		goto out;
+		if (json_object_object_get(object, "Charging"))
+		{
+			usbconn = json_object_get_boolean(json_object_object_get(object,
+			                                  "USBConnected"));
+			dockconn = json_object_get_boolean(json_object_object_get(object, "DockPower"));
+			g_debug("Charger connected/disconnected, usb : %s, dock : %s",
+			        usbconn ? "true" : "false", dockconn ? "true" : "false");
+			chargerIsConnected = usbconn | dockconn;
+		}
 	}
-
-	if (json_object_object_get(object, "Charging"))
-	{
-		usbconn = json_object_get_boolean(json_object_object_get(object,
-		                                  "USBConnected"));
-		dockconn = json_object_get_boolean(json_object_object_get(object, "DockPower"));
-		g_debug("Charger connected/disconnected, usb : %s, dock : %s",
-		        usbconn ? "true" : "false", dockconn ? "true" : "false");
-		chargerIsConnected = usbconn | dockconn;
-	}
-
-out:
 
 	if (!is_error(object))
 	{

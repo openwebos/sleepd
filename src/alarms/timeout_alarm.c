@@ -44,6 +44,7 @@
 #include "timeout_alarm.h"
 #include "config.h"
 #include "init.h"
+#include "timesaver.h"
 
 #define LOG_DOMAIN "ALARMS-TIMEOUT: "
 
@@ -837,41 +838,41 @@ _timeout_read(_AlarmTimeoutNonConst *timeout, const char *app_id,
 		          "%s() failed select on %s, rc=%d\n",
 		          __FUNCTION__, zErrMsg, rc);
 		sqlite3_free(zErrMsg);
-		goto exit;
 	}
-
-	if (noRows)
+	else
 	{
-		if (noRows > 1)
+		if (noRows)
 		{
-			g_warning(LOG_DOMAIN "%s: ERROR, %d rows for (\"%s\", \"%s\", %s)", __func__,
-			          noRows,
-			          app_id, key, public_bus ? "public" : "private");
+			if (noRows > 1)
+			{
+				g_warning(LOG_DOMAIN "%s: ERROR, %d rows for (\"%s\", \"%s\", %s)", __func__,
+				          noRows,
+				          app_id, key, public_bus ? "public" : "private");
+			}
+
+			timeout->table_id               = g_strdup(table[ noCols      ]);
+			timeout->app_id                 = g_strdup(table[ noCols +  1 ]);
+			timeout->key                    = g_strdup(table[ noCols +  2 ]);
+			timeout->uri                    = g_strdup(table[ noCols +  3 ]);
+			timeout->params                 = g_strdup(table[ noCols +  4 ]);
+			timeout->public_bus             = atoi(table[ noCols +  5 ]);
+			timeout->wakeup                 = atoi(table[ noCols +  6 ]);
+			timeout->calendar               = atoi(table[ noCols +  7 ]);
+			timeout->expiry                 = atol(table[ noCols +  8 ]);
+
+			// The two "activity" fields could be null if this is an
+			// old record where the new columns were inserted.
+			timeout->activity_id            = table[noCols + 9] ? g_strdup(
+			                                      table[noCols +  9]) : g_strdup(DEFAULT_ACTIVITY_ID);
+			timeout->activity_duration_ms   = table[noCols + 10] ? atoi(
+			                                      table[noCols + 10]) : TIMEOUT_KEEP_ALIVE_MS;
+
+			ret = true;
 		}
 
-		timeout->table_id               = g_strdup(table[ noCols      ]);
-		timeout->app_id                 = g_strdup(table[ noCols +  1 ]);
-		timeout->key                    = g_strdup(table[ noCols +  2 ]);
-		timeout->uri                    = g_strdup(table[ noCols +  3 ]);
-		timeout->params                 = g_strdup(table[ noCols +  4 ]);
-		timeout->public_bus             = atoi(table[ noCols +  5 ]);
-		timeout->wakeup                 = atoi(table[ noCols +  6 ]);
-		timeout->calendar               = atoi(table[ noCols +  7 ]);
-		timeout->expiry                 = atol(table[ noCols +  8 ]);
-
-		// The two "activity" fields could be null if this is an
-		// old record where the new columns were inserted.
-		timeout->activity_id            = table[noCols + 9] ? g_strdup(
-		                                      table[noCols +  9]) : g_strdup(DEFAULT_ACTIVITY_ID);
-		timeout->activity_duration_ms   = table[noCols + 10] ? atoi(
-		                                      table[noCols + 10]) : TIMEOUT_KEEP_ALIVE_MS;
-
-		ret = true;
+		sqlite3_free_table(table);
 	}
 
-	sqlite3_free_table(table);
-
-exit:
 	return ret;
 
 } // _timeout_read
@@ -1061,6 +1062,7 @@ _alarm_timeout_set(LSHandle *sh, LSMessage *message, void *ctx)
 	bool calendar;
 	time_t expiry;
 	_AlarmTimeout timeout;
+	char **str_split;
 
 	char *app_id = NULL;
 
@@ -1155,14 +1157,40 @@ _alarm_timeout_set(LSHandle *sh, LSMessage *message, void *ctx)
 
 		int mm, dd, yyyy;
 		int HH, MM, SS;
+		char **date_str;
 
-		int ret = sscanf(at, "%02d/%02d/%04d %02d:%02d:%02d",
-		                 &mm, &dd, &yyyy, &HH, &MM, &SS);
-
-		if (ret != 6)
+		str_split = g_strsplit(at," ",2);
+		if (!str_split) goto invalid_json;
+		if ((NULL == str_split[0]) || (NULL == str_split[1]))
 		{
+			g_strfreev(str_split);
 			goto invalid_json;
 		}
+
+		date_str = g_strsplit(str_split[0],"/",3);
+		if (!date_str)
+		{
+			g_strfreev(str_split);
+			goto invalid_json;
+		}
+		if ((NULL == date_str[0]) || (NULL == date_str[1]) || (NULL == date_str[2]))
+		{
+			g_strfreev(str_split);
+			g_strfreev(date_str);
+			goto invalid_json;
+		}
+
+		mm = atoi(date_str[0]);
+		dd = atoi(date_str[1]);
+		yyyy = atoi(date_str[2]);
+		g_strfreev(date_str);
+
+		if (!(ConvertJsonTime(str_split[1], &HH, &MM, &SS)) || (HH < 0 || HH > 24 || MM < 0 || MM > 59 || SS < 0 || SS > 59))
+		{
+			g_strfreev(str_split);
+			goto invalid_json;
+		}
+		g_strfreev(str_split);
 
 		if (!g_date_valid_dmy(dd, mm, yyyy))
 		{
@@ -1204,11 +1232,7 @@ _alarm_timeout_set(LSHandle *sh, LSMessage *message, void *ctx)
 
 		int HH, MM, SS;
 
-		if (sscanf(in, "%02d:%02d:%02d", &HH, &MM, &SS) != 3)
-		{
-			goto invalid_json;
-		}
-		else if (HH < 0 || HH > 24 || MM < 0 || MM > 59 || SS < 0 || SS > 59)
+		if (!(ConvertJsonTime(in, &HH, &MM, &SS)) || (HH < 0 || HH > 24 || MM < 0 || MM > 59 || SS < 0 || SS > 59))
 		{
 			goto invalid_json;
 		}

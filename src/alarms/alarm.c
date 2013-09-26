@@ -42,6 +42,7 @@
 #include "logging.h"
 #include "config.h"
 #include "timeout_alarm.h"
+#include "timesaver.h"
 
 #define LOG_DOMAIN "ALARM: "
 
@@ -187,7 +188,8 @@ alarmAdd(LSHandle *sh, LSMessage *message, void *ctx)
 		goto invalid_format;
 	}
 
-	if (sscanf(rel_time, "%02d:%02d:%02d", &rel_hour, &rel_min, &rel_sec) != 3)
+	if(!ConvertJsonTime(rel_time, &rel_hour, &rel_min, &rel_sec) ||
+	    (rel_hour < 0 || rel_hour > 24 || rel_min < 0 || rel_min > 59 ||rel_sec < 0 || rel_sec > 59))
 	{
 		goto invalid_format;
 	}
@@ -334,6 +336,7 @@ alarmAddCalendar(LSHandle *sh, LSMessage *message, void *ctx)
 	struct tm gm_time;
 	bool subscribe;
 	bool retVal = false;
+	gchar **cal_date_str;
 
 	time_t alarm_time = 0;
 
@@ -370,18 +373,24 @@ alarmAddCalendar(LSHandle *sh, LSMessage *message, void *ctx)
 	int hour, min, sec;
 	int month, day, year;
 
-	if (sscanf(cal_time, "%02d:%02d:%02d", &hour, &min, &sec) != 3)
+	if(!ConvertJsonTime(cal_time, &hour, &min, &sec))
 	{
 		goto invalid_format;
 	}
 
-	if (sscanf(cal_date, "%02d-%02d-%04d", &month, &day, &year) != 3)
+	cal_date_str = g_strsplit(cal_date,"-",3);
+	if ((NULL == cal_date_str[0]) || (NULL == cal_date_str[1]) || (NULL == cal_date_str[2]))
 	{
 		goto invalid_format;
 	}
 
-	if (hour < 0 || hour > 24 || min < 0 || min > 60 ||
-	        sec < 0 || sec > 60 ||
+	month = atoi(cal_date_str[0]);
+	day = atoi(cal_date_str[1]);
+	year = atoi(cal_date_str[2]);
+	g_strfreev(cal_date_str);
+
+	if (hour < 0 || hour > 24 || min < 0 || min > 59 ||
+	        sec < 0 || sec > 59 ||
 	        month < 1 || month > 12 || day < 1 || day > 31 || year < 0)
 	{
 		goto invalid_format;

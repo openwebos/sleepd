@@ -30,6 +30,7 @@
 #include "config.h"
 #include "logging.h"
 #include "main.h"
+#include <ctype.h>
 
 #define LOG_DOMAIN "timesaver: "
 
@@ -58,47 +59,82 @@ timesaver_save()
 	if (NULL == time_db)
 	{
 		// This can happen if we goto ls_error in main()
-		g_warning("%s called with time database name (time_db) uninitialized",
+		SLEEPDLOG(LOG_WARNING,"%s called with time database name (time_db) uninitialized",
 		          __FUNCTION__);
-		goto cleanup;
 	}
-
-	//  First write the contents to tmp file and then rename to "time_saver" file
-	//  to ensure file integrity with power cut or battery pull.
-
-	int file = open(time_db_tmp, O_CREAT | O_WRONLY, S_IRWXU | S_IRGRP | S_IROTH);
-
-	if (!file)
+	else
 	{
-		g_warning("%s: Could not save time to \"%s\"", __FUNCTION__, time_db_tmp);
-		goto cleanup;
+		//  First write the contents to tmp file and then rename to "time_saver" file
+		//  to ensure file integrity with power cut or battery pull.
+
+		int file = open(time_db_tmp, O_CREAT | O_WRONLY, S_IRWXU | S_IRGRP | S_IROTH);
+
+		if (file < 0)
+		{
+			SLEEPDLOG(LOG_WARNING,"%s: Could not save time to \"%s\"", __FUNCTION__, time_db_tmp);
+		}
+		else
+		{
+			struct timespec tp;
+
+			clock_gettime(CLOCK_REALTIME, &tp);
+
+			SLEEPDLOG(LOG_DEBUG, "%s Saving to file %ld", __FUNCTION__, tp.tv_sec);
+
+			char timestamp[16];
+
+			snprintf(timestamp, sizeof(timestamp), "%ld", tp.tv_sec);
+
+			write(file, timestamp, strlen(timestamp));
+
+			fsync(file);
+
+			close(file);
+
+			int ret = rename(time_db_tmp, time_db);
+
+			if (ret)
+			{
+				SLEEPDLOG(LOG_WARNING,"%s : Unable to rename %s to %s", __FUNCTION__, time_db_tmp, time_db);
+			}
+
+			unlink(time_db_tmp);
+		}
 	}
 
-	struct timespec tp;
-
-	clock_gettime(CLOCK_REALTIME, &tp);
-
-	SLEEPDLOG(LOG_DEBUG, "%s Saving to file %ld", __FUNCTION__, tp.tv_sec);
-
-	char timestamp[16];
-
-	snprintf(timestamp, sizeof(timestamp), "%ld", tp.tv_sec);
-
-	write(file, timestamp, strlen(timestamp));
-
-	fsync(file);
-
-	close(file);
-
-	int ret = rename(time_db_tmp, time_db);
-
-	if (ret)
-	{
-		g_warning("%s : Unable to rename %s to %s", __FUNCTION__, time_db_tmp, time_db);
-	}
-
-	unlink(time_db_tmp);
-
-cleanup:
 	return;
+}
+
+bool ConvertJsonTime(const char *time, int *hour, int *minute, int *second)
+{
+	gchar **time_str;
+	int i = 0, j = 0, len;
+	time_str = g_strsplit(time,":",3);
+	if (!time_str) return false;
+	if ((NULL == time_str[0]) || (NULL == time_str[1]) || (NULL == time_str[2]))
+	{
+		g_strfreev(time_str);
+		return false;
+	}
+	for (i=0;i<3;i++)
+	{
+		char *timestr;
+		timestr = time_str[i];
+		len = strlen(time_str[i]);
+		for (j=0;j<len;j++)
+		{
+			if(!isdigit(timestr[j]))
+			{
+				SLEEPDLOG(LOG_DEBUG,"%s contains non-numeric values",time);
+				g_strfreev(time_str);
+				return false;
+			}
+		}
+	}
+
+	*hour = atoi(time_str[0]);
+	*minute = atoi(time_str[1]);
+	*second = atoi(time_str[2]);
+	g_strfreev(time_str);
+	return true;
 }
