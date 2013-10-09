@@ -59,8 +59,7 @@ timesaver_save()
 	if (NULL == time_db)
 	{
 		// This can happen if we goto ls_error in main()
-		SLEEPDLOG(LOG_WARNING,"%s called with time database name (time_db) uninitialized",
-		          __FUNCTION__);
+		SLEEPDLOG_DEBUG("called with time database name (time_db) uninitialized");
 	}
 	else
 	{
@@ -71,7 +70,7 @@ timesaver_save()
 
 		if (file < 0)
 		{
-			SLEEPDLOG(LOG_WARNING,"%s: Could not save time to \"%s\"", __FUNCTION__, time_db_tmp);
+			SLEEPDLOG_WARNING(MSGID_TIME_NOT_SAVED_TO_DB, 0, "Could not save time to \"%s\"", time_db_tmp);
 		}
 		else
 		{
@@ -79,7 +78,7 @@ timesaver_save()
 
 			clock_gettime(CLOCK_REALTIME, &tp);
 
-			SLEEPDLOG(LOG_DEBUG, "%s Saving to file %ld", __FUNCTION__, tp.tv_sec);
+			SLEEPDLOG_DEBUG("Saving to file %ld", tp.tv_sec);
 
 			char timestamp[16];
 
@@ -95,7 +94,7 @@ timesaver_save()
 
 			if (ret)
 			{
-				SLEEPDLOG(LOG_WARNING,"%s : Unable to rename %s to %s", __FUNCTION__, time_db_tmp, time_db);
+				SLEEPDLOG_DEBUG("Unable to rename %s to %s", time_db_tmp, time_db);
 			}
 
 			unlink(time_db_tmp);
@@ -125,7 +124,7 @@ bool ConvertJsonTime(const char *time, int *hour, int *minute, int *second)
 		{
 			if(!isdigit(timestr[j]))
 			{
-				SLEEPDLOG(LOG_DEBUG,"%s contains non-numeric values",time);
+				SLEEPDLOG_DEBUG("%s contains non-numeric values",time);
 				g_strfreev(time_str);
 				return false;
 			}

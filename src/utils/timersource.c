@@ -35,6 +35,7 @@
 
 #include "timersource.h"
 #include "clock.h"
+#include "logging.h"
 
 struct _GTimerSource
 {
@@ -164,8 +165,7 @@ g_timer_source_dispatch(GSource *source,
 
 	if (!callback)
 	{
-		g_warning("Timeout source dispatched without callback\n"
-		          "Call g_source_set_callback().");
+		SLEEPDLOG_DEBUG("Timeout source dispatched without callback, Call g_source_set_callback()");
 		return FALSE;
 	}
 
@@ -257,8 +257,7 @@ g_timer_source_set_interval(GTimerSource *tsource, guint interval_ms,
 
 		if (!context)
 		{
-			g_critical("Cannot get context for timer_source.\n"
-			           "Maybe you didn't call g_source_attach()\n");
+			SLEEPDLOG_DEBUG("Cannot get context for timer_source. Maybe you didn't call g_source_attach()");
 			return;
 		}
 

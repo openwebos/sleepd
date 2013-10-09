@@ -226,7 +226,7 @@ _print_timeout(const char *message, const char *app_id, const char *key,
 
 	gmtime_r(&expiry, &expiry_tm);
 	asctime_r(&expiry_tm, buf);
-	SLEEPDLOG(LOG_DEBUG, "%s, timeout for (\"%s\", \"%s\", %s) at %ld, %s",
+	SLEEPDLOG_DEBUG("%s, timeout for (\"%s\", \"%s\", %s) at %ld, %s",
 	          message, app_id, key, public_bus ? "public" : "private", expiry, buf);
 }
 
@@ -238,8 +238,6 @@ void _update_timeouts(void);
 static void _rtc_alarm_fired(nyx_device_handle_t handle,
                              nyx_callback_status_t status, void *data)
 {
-	g_debug(LOG_DOMAIN "%s ", __FUNCTION__);
-
 	_update_timeouts();
 }
 
@@ -275,9 +273,8 @@ _timeout_response(LSHandle *sh, LSMessage *message, void *ctx)
 
 		if (!retVal)
 		{
-			SLEEPDLOG(LOG_ERR,
-			          "%s: Error not send timeout message because of %s",
-			          __FUNCTION__, LSMessageGetPayload(message));
+			SLEEPDLOG_WARNING(MSGID_TIMEOUT_MSG_ERR, 1, PMLOGKS(CAUSE,LSMessageGetPayload(message)),
+					  "Could not send timeout message");
 		}
 	}
 
@@ -303,8 +300,7 @@ _timeout_fire(_AlarmTimeout *timeout)
 	g_return_if_fail(timeout != NULL);
 	GString *payload = g_string_new("");
 
-	SLEEPDLOG(LOG_INFO, "%s (%s,%s => %s)", __FUNCTION__,
-	          timeout->app_id, timeout->key, timeout->uri);
+	SLEEPDLOG_DEBUG("_timeout_fire : %s (%s,%s => %s)", timeout->app_id, timeout->key, timeout->uri);
 
 	LSHandle *sh = NULL;
 	bool retVal;
@@ -353,9 +349,7 @@ _timeout_fire(_AlarmTimeout *timeout)
 
 	if (!retVal)
 	{
-		SLEEPDLOG(LOG_WARNING, "%s: Could not send (%s %s): %s",
-		          __FUNCTION__,
-		          timeout->uri, timeout->params, lserror.message);
+		SLEEPDLOG_DEBUG("_timeout_fire() : Could not send (%s %s): %s", timeout->uri, timeout->params, lserror.message);
 		LSErrorFree(&lserror);
 	}
 
@@ -370,7 +364,7 @@ bool _sql_step_finalize(const char *func, sqlite3_stmt *st)
 
 	if (rc != SQLITE_DONE)
 	{
-		SLEEPDLOG(LOG_ERR, "%s(), sqlite3_step failed with %d\n", func, rc);
+		SLEEPDLOG_WARNING(MSGID_SQLITE_STEP_FAIL, 1, PMLOGKFV(ERRCODE,"%d",rc), "");
 		return false;
 	}
 
@@ -378,7 +372,7 @@ bool _sql_step_finalize(const char *func, sqlite3_stmt *st)
 
 	if (rc != SQLITE_OK)
 	{
-		SLEEPDLOG(LOG_ERR, "%s(), sqlite3_finalize failed with %d\n", func, rc);
+		SLEEPDLOG_WARNING(MSGID_SQLITE_FINALIZE_FAIL, 1, PMLOGKFV(ERRCODE,"%d",rc), "");
 		return false;
 	}
 
@@ -393,7 +387,7 @@ bool _sql_step_finalize(const char *func, sqlite3_stmt *st)
 static void
 _recalculate_timeouts(time_t delta)
 {
-	g_debug(LOG_DOMAIN "%s(%ld)", __FUNCTION__, delta);
+	PMLOG_TRACE("delta = %ld", delta);
 
 	if (delta)
 	{
@@ -413,8 +407,7 @@ _recalculate_timeouts(time_t delta)
 
 		if (SQLITE_OK != rc)
 		{
-			SLEEPDLOG(LOG_ERR,
-			          "%s() select... failed %s, rc=%d\n", __FUNCTION__, zErrMsg, rc);
+			SLEEPDLOG_WARNING(MSGID_EXPIRY_SELECT_FAIL, 2, PMLOGKS(ERRTEXT,zErrMsg), PMLOGKFV(ERRCODE,"%d",rc), "");
 			sqlite3_free(zErrMsg);
 			return;
 		}
@@ -439,7 +432,7 @@ _recalculate_timeouts(time_t delta)
 
 			if (rc != SQLITE_OK)
 			{
-				SLEEPDLOG(LOG_ERR, "%s() cannot update expiry", __FUNCTION__);
+				SLEEPDLOG_WARNING(MSGID_UPDATE_EXPIRY_FAIL, 0, "cannot update expiry");
 			}
 			else
 			{
@@ -459,8 +452,6 @@ _recalculate_timeouts(time_t delta)
 static void
 _expire_timeouts(void)
 {
-	g_debug(LOG_DOMAIN "%s ", __FUNCTION__);
-
 	int rc;
 	char **table;
 	int noRows, noCols;
@@ -484,8 +475,7 @@ _expire_timeouts(void)
 
 	if (SQLITE_OK != rc)
 	{
-		SLEEPDLOG(LOG_ERR,
-		          "%s() select... failed %s, rc=%d\n", __FUNCTION__, zErrMsg, rc);
+		SLEEPDLOG_WARNING(MSGID_SELECT_EXPIRED_TIMEOUT, 2, PMLOGKS(ERRTEXT,zErrMsg), PMLOGKFV(ERRCODE,"%d",rc), "");
 		sqlite3_free(zErrMsg);
 		return;
 	}
@@ -508,9 +498,8 @@ _expire_timeouts(void)
 		*/
 		if (!table[base + 6] || !table[base + 7])
 		{
-			g_debug(LOG_DOMAIN
-			        "%s: null activity_id or activity_duration_ms fields for \"%s\":\"%s\"",
-			        __func__, timeout.app_id, timeout.key);
+			SLEEPDLOG_DEBUG("null activity_id or activity_duration_ms fields for \"%s\":\"%s\"",
+					timeout.app_id, timeout.key);
 		}
 
 		timeout.activity_id =
@@ -534,7 +523,7 @@ _expire_timeouts(void)
 		}
 		else
 		{
-			SLEEPDLOG(LOG_ERR, "%s prepare failed because of %d", __FUNCTION__, rc);
+			SLEEPDLOG_WARNING(MSGID_SQLITE_PREPARE_FAIL, 1, PMLOGKFV(ERRCODE,"%d",rc), "");
 		}
 	}
 
@@ -561,7 +550,8 @@ timeout_get_next_wakeup(time_t *expiry, gchar **app_id, gchar **key)
 
 	if (rc != SQLITE_OK)
 	{
-		g_critical("%s() failed select expiry %s, rc=%d", __func__, zErrMsg, rc);
+		SLEEPDLOG_WARNING(MSGID_SELECT_EXPIRY_ERR, 2, PMLOGKS(ERRTEXT,zErrMsg), PMLOGKFV(ERRCODE,"%d",rc),
+			    "Failed to select expiry from timeout db");
 		sqlite3_free(zErrMsg);
 		return false;
 	}
@@ -598,8 +588,6 @@ timeout_get_next_wakeup(time_t *expiry, gchar **app_id, gchar **key)
 void
 _queue_next_timeout(bool set_callback_fn)
 {
-	g_debug(LOG_DOMAIN "%s ", __FUNCTION__);
-
 	int rc;
 	char **table;
 	int noRows, noCols;
@@ -616,9 +604,7 @@ _queue_next_timeout(bool set_callback_fn)
 
 	if (rc != SQLITE_OK)
 	{
-		SLEEPDLOG(LOG_ERR,
-		          "%s() failed select expiry %s, rc=%d\n",
-		          __FUNCTION__, zErrMsg, rc);
+		SLEEPDLOG_WARNING(MSGID_SELECT_EXPIRY_WITH_WAKEUP, 2, PMLOGKS(ERRTEXT,zErrMsg), PMLOGKFV(ERRCODE,"%d",rc), "");
 		sqlite3_free(zErrMsg);
 		return;
 	}
@@ -650,9 +636,7 @@ _queue_next_timeout(bool set_callback_fn)
 
 	if (rc != SQLITE_OK)
 	{
-		SLEEPDLOG(LOG_ERR,
-		          "%s() failed select expiry %s, rc=%d\n",
-		          __FUNCTION__, zErrMsg, rc);
+		SLEEPDLOG_WARNING(MSGID_ALARM_TIMEOUT_SELECT, 2, PMLOGKS(ERRTEXT,zErrMsg), PMLOGKFV(ERRCODE,"%d",rc), "");
 		sqlite3_free(zErrMsg);
 		return;
 	}
@@ -684,8 +668,6 @@ _queue_next_timeout(bool set_callback_fn)
 void
 _update_timeouts(void)
 {
-	g_debug(LOG_DOMAIN "%s ", __FUNCTION__);
-
 	time_t delta =
 	    0;  // prevent compile error "may be used uninitialized" when optimization is cranked up
 
@@ -710,8 +692,6 @@ void _timeout_create(_AlarmTimeout *timeout,
                      int activity_duration_ms,
                      bool calendar, time_t expiry)
 {
-	g_debug(LOG_DOMAIN "%s ", __FUNCTION__);
-
 	g_return_if_fail(timeout != NULL);
 
 	timeout->app_id = app_id;
@@ -729,8 +709,6 @@ void _timeout_create(_AlarmTimeout *timeout,
 bool
 _timeout_set(_AlarmTimeout *timeout)
 {
-	g_debug(LOG_DOMAIN "%s ", __FUNCTION__);
-
 	int rc;
 	sqlite3_stmt *st = NULL;
 	const char *tail;
@@ -746,7 +724,7 @@ _timeout_set(_AlarmTimeout *timeout)
 
 	if (rc != SQLITE_OK)
 	{
-		SLEEPDLOG(LOG_ERR, "Insert into AlarmTimeout failed with %d\n", rc);
+		SLEEPDLOG_WARNING(MSGID_ALARM_TIMEOUT_INSERT, 1, PMLOGKFV(ERRCODE,"%d",rc), "Insert into AlarmTimeout failed");
 		return false;
 	}
 
@@ -819,8 +797,7 @@ _timeout_read(_AlarmTimeoutNonConst *timeout, const char *app_id,
 		key = "";
 	}
 
-	g_debug(LOG_DOMAIN "%s: SELECT (\"%s\", \"%s\", %s)", __FUNCTION__,
-	        app_id, key, public_bus ? "public" : "private");
+	SLEEPDLOG_DEBUG("SELECT (\"%s\", \"%s\", %s)", app_id, key, public_bus ? "public" : "private");
 
 	char *sqlquery = g_strdup_printf(
 	                     "SELECT t1key,app_id,key,uri,params,public_bus,wakeup,calendar,expiry,activity_id,activity_duration_ms FROM AlarmTimeout "
@@ -834,9 +811,7 @@ _timeout_read(_AlarmTimeoutNonConst *timeout, const char *app_id,
 
 	if (rc != SQLITE_OK)
 	{
-		SLEEPDLOG(LOG_ERR,
-		          "%s() failed select on %s, rc=%d\n",
-		          __FUNCTION__, zErrMsg, rc);
+		SLEEPDLOG_WARNING(MSGID_SELECT_ALL_FROM_TIMEOUT, 2, PMLOGKS(ERRTEXT,zErrMsg), PMLOGKFV(ERRCODE,"%d",rc), "");
 		sqlite3_free(zErrMsg);
 	}
 	else
@@ -845,9 +820,8 @@ _timeout_read(_AlarmTimeoutNonConst *timeout, const char *app_id,
 		{
 			if (noRows > 1)
 			{
-				g_warning(LOG_DOMAIN "%s: ERROR, %d rows for (\"%s\", \"%s\", %s)", __func__,
-				          noRows,
-				          app_id, key, public_bus ? "public" : "private");
+				SLEEPDLOG_DEBUG("%d rows for (%s, %s, %s)",noRows,
+						app_id, key, public_bus ? "public" : "private");
 			}
 
 			timeout->table_id               = g_strdup(table[ noCols      ]);
@@ -903,7 +877,7 @@ _timeout_delete(const char *app_id, const char *key, bool public_bus)
 		key = "";
 	}
 
-	g_debug(LOG_DOMAIN "%s (\"%s\", \"%s\", %s)", __FUNCTION__, app_id, key,
+	SLEEPDLOG_DEBUG("(\"%s\", \"%s\", %s)", app_id, key,
 	        public_bus ? "public" : "private");
 
 	/* Delete the matching timeout.*/
@@ -913,8 +887,7 @@ _timeout_delete(const char *app_id, const char *key, bool public_bus)
 
 	if (rc != SQLITE_OK)
 	{
-		SLEEPDLOG(LOG_DEBUG,
-		          "Could not remove AlarmTimeout, failed with %d\n", rc);
+		SLEEPDLOG_DEBUG("Could not remove AlarmTimeout, failed with %d", rc);
 		return false;
 	}
 
@@ -966,8 +939,8 @@ _rtc_check(gpointer data)
 	if (this_time == sLastRTCTime)
 	{
 		sNumTimes++;
-		g_critical("%s: RTC appears not to be ticking! nyx_query_time(NULL) returned %ld, number of times showing same RTC time : %ld",
-		           __func__, this_time, sNumTimes);
+		SLEEPDLOG_WARNING(MSGID_RTC_ERR, 1, PMLOGKFV(NYX_QUERY_TIME,"%ld",this_time),
+				"RTC appears not to be ticking, number of times showing same RTC time : %ld",sNumTimes);
 	}
 	else
 	{
@@ -989,8 +962,6 @@ _rtc_check(gpointer data)
 static gboolean
 _timer_check(gpointer data)
 {
-	g_debug(LOG_DOMAIN "%s ", __FUNCTION__);
-
 	_update_timeouts();
 	return TRUE;
 }
@@ -1025,7 +996,7 @@ _timeout_exists(const char *app_id, const char *key, bool public_bus)
 
 	if (ret)
 	{
-		_print_timeout(LOG_DOMAIN "timeout exists", app_id, key, public_bus,
+		_print_timeout("timeout exists", app_id, key, public_bus,
 		               timeout.expiry);
 		_free_timeout_fields(&timeout);
 	}
@@ -1047,8 +1018,6 @@ _timeout_exists(const char *app_id, const char *key, bool public_bus)
 static bool
 _alarm_timeout_set(LSHandle *sh, LSMessage *message, void *ctx)
 {
-	g_debug(LOG_DOMAIN "%s ", __FUNCTION__);
-
 	bool retVal;
 	const char *app_instance_id;
 	const char *key;
@@ -1112,7 +1081,7 @@ _alarm_timeout_set(LSHandle *sh, LSMessage *message, void *ctx)
 	{
 		if (!duration_provided)
 		{
-			g_debug(LOG_DOMAIN "activity_id w/o activity_duration_ms");
+			SLEEPDLOG_DEBUG("activity_id w/o activity_duration_ms");
 			goto invalid_json;
 		}
 
@@ -1127,7 +1096,7 @@ _alarm_timeout_set(LSHandle *sh, LSMessage *message, void *ctx)
 	{
 		if (duration_provided)
 		{
-			g_debug(LOG_DOMAIN "activity_duration_ms w/o activity_id");
+			SLEEPDLOG_DEBUG("activity_duration_ms w/o activity_id");
 			goto invalid_json;
 		}
 
@@ -1149,9 +1118,7 @@ _alarm_timeout_set(LSHandle *sh, LSMessage *message, void *ctx)
 	if (at)
 	{
 
-		SLEEPDLOG(LOG_INFO, "%s (%s,%s,%s) at %s",
-		          __FUNCTION__, app_id, key, wakeup ? "wakeup" : "_",
-		          at);
+		SLEEPDLOG_DEBUG("_alarm_timeout_set() : (%s,%s,%s) at %s",app_id, key, wakeup ? "wakeup" : "_", at);
 
 		timeout_type = AlarmTimeoutCalendar;
 
@@ -1224,9 +1191,7 @@ _alarm_timeout_set(LSHandle *sh, LSMessage *message, void *ctx)
 	else if (in)
 	{
 
-		SLEEPDLOG(LOG_INFO, "%s (%s,%s,%s) in %s",
-		          __FUNCTION__, app_id, key, wakeup ? "wakeup" : "_",
-		          in);
+		SLEEPDLOG_DEBUG("%s (%s,%s,%s) in %s", app_id, key, wakeup ? "wakeup" : "_", in);
 
 		timeout_type = AlarmTimeoutRelative;
 
@@ -1250,14 +1215,8 @@ _alarm_timeout_set(LSHandle *sh, LSMessage *message, void *ctx)
 
 		if (delta < TIMEOUT_MINIMUM_HANDSET_SEC)
 		{
-			SLEEPDLOG(
-			    LOG_WARNING,
-			    "%s: alarm timeout interval of %d seconds is below limit of "
-			    "%d seconds enforced on actual handsets",
-			    __FUNCTION__,
-			    delta,
-			    TIMEOUT_MINIMUM_HANDSET_SEC
-			);
+			SLEEPDLOG_DEBUG("alarm timeout interval of %d seconds is below limit of "
+				        "%d seconds enforced on actual handsets", delta, TIMEOUT_MINIMUM_HANDSET_SEC);
 		}
 
 		expiry = rtc_wall_time() + delta;
@@ -1278,8 +1237,8 @@ _alarm_timeout_set(LSHandle *sh, LSMessage *message, void *ctx)
 
 		kept_existing = true;
 
-		SLEEPDLOG(LOG_DEBUG, "%s: keeping existing timeout for (\"%s\", \"%s\", %s)",
-		          __FUNCTION__, app_id, key, public_bus ? "public" : "private");
+		SLEEPDLOG_DEBUG("keeping existing timeout for (\"%s\", \"%s\", %s)",
+				app_id, key, public_bus ? "public" : "private");
 	}
 	else
 	{
@@ -1312,7 +1271,7 @@ _alarm_timeout_set(LSHandle *sh, LSMessage *message, void *ctx)
 
 	if (!retVal)
 	{
-		SLEEPDLOG(LOG_WARNING, "%s could not send reply.", __FUNCTION__);
+		SLEEPDLOG_WARNING(MSGID_LSMESSAGE_REPLY_FAIL, 0, "could not send reply");
 	}
 
 	g_free(payload);
@@ -1339,8 +1298,7 @@ activity_duration_too_short:
 
 	if (!retVal)
 	{
-		SLEEPDLOG(LOG_WARNING, "%s could not send reply <activity duration too short>.",
-		          __FUNCTION__);
+		SLEEPDLOG_WARNING(MSGID_SHORT_ACTIVITY_DURATION, 0, "could not send reply <activity duration too short>");
 	}
 
 	goto cleanup;
@@ -1351,8 +1309,7 @@ unknown_error:
 
 	if (!retVal)
 	{
-		SLEEPDLOG(LOG_WARNING,
-		          "%s could not send reply <unknown error>.", __FUNCTION__);
+		SLEEPDLOG_WARNING(MSGID_UNKNOWN_ERR, 0, "could not send reply <unknown error>");
 	}
 
 	goto cleanup;
@@ -1363,8 +1320,7 @@ invalid_json:
 
 	if (!retVal)
 	{
-		SLEEPDLOG(LOG_WARNING,
-		          "%s could not send reply <invalid format>.", __FUNCTION__);
+		SLEEPDLOG_WARNING(MSGID_INVALID_JSON_REPLY, 0, "could not send reply <invalid format>");
 	}
 
 	goto cleanup;
@@ -1429,8 +1385,7 @@ _alarm_timeout_clear(LSHandle *sh, LSMessage *message, void *ctx)
 
 	app_id = _get_appid_dup(app_instance_id);
 
-	SLEEPDLOG(LOG_INFO, "%s (%s,%s,%s)", __FUNCTION__, app_id, key,
-	          public_bus ? "public" : "private");
+	SLEEPDLOG_DEBUG("_alarm_timeout_clear() : (%s,%s,%s)", app_id, key,public_bus ? "public" : "private");
 
 	retVal = _timeout_clear(app_id, key, public_bus);
 
@@ -1515,7 +1470,7 @@ _alarms_timeout_init(void)
 
 	if (gSleepConfig.disable_rtc_alarms)
 	{
-		SLEEPDLOG(LOG_INFO, "%s: RTC alarms disabled", __FUNCTION__);
+		SLEEPDLOG_DEBUG("RTC alarms disabled");
 		return 0;
 	}
 
@@ -1527,8 +1482,7 @@ _alarms_timeout_init(void)
 
 	if (!retVal)
 	{
-		SLEEPDLOG(LOG_ERR, "Failed to open database %s\n",
-		          timeout_db_name);
+		SLEEPDLOG_ERROR(MSGID_DB_OPEN_ERR, 0, "Failed to open database %s", timeout_db_name);
 		goto error;
 	}
 
@@ -1538,7 +1492,7 @@ _alarms_timeout_init(void)
 
 	if (!retVal)
 	{
-		SLEEPDLOG(LOG_ERR, "%s could not create database\n", __FUNCTION__);
+		SLEEPDLOG_ERROR(MSGID_DB_CREATE_ERR, 0, "could not create database");
 		goto error;
 	}
 
@@ -1546,7 +1500,7 @@ _alarms_timeout_init(void)
 
 	if (!retVal)
 	{
-		SLEEPDLOG(LOG_ERR, "%s could not create index\n", __FUNCTION__);
+		SLEEPDLOG_ERROR(MSGID_INDEX_CREATE_FAIL, 0, "could not create index");
 		goto error;
 	}
 
@@ -1561,8 +1515,7 @@ _alarms_timeout_init(void)
 	                                   "/timeout", timeout_methods /*public*/, NULL /*private*/, NULL, NULL,
 	                                   &lserror))
 	{
-		SLEEPDLOG(LOG_ERR, "%s could not register category: %s",
-		          __FUNCTION__, lserror.message);
+		SLEEPDLOG_ERROR(MSGID_CATEGORY_REG_FAIL, 1, PMLOGKS(ERRTEXT,lserror.message), "could not register category");
 		LSErrorFree(&lserror);
 		goto error;
 	}
@@ -1574,8 +1527,8 @@ _alarms_timeout_init(void)
 
 	if (!retVal)
 	{
-		SLEEPDLOG(LOG_ERR, "%s could not register for suspend resume signal: %s",
-		          __FUNCTION__, lserror.message);
+		SLEEPDLOG_ERROR(MSGID_METHOD_REG_ERR, 1, PMLOGKS(ERRTEXT,lserror.message),
+				"could not register for suspend resume signal");
 		LSErrorFree(&lserror);
 		goto error;
 	}
@@ -1584,11 +1537,11 @@ _alarms_timeout_init(void)
 
 	if (!retVal)
 	{
-		SLEEPDLOG(LOG_ERR, "%s could not get wall-rtc offset.", __FUNCTION__);
+		SLEEPDLOG_ERROR(MSGID_UPDATE_RTC_FAIL, 0, "could not get wall-rtc offset");
 	}
 	else
 	{
-		SLEEPDLOG(LOG_INFO, "Initial WALL-RTC = %ld", rtc_to_wall);
+		SLEEPDLOG_DEBUG("Initial WALL-RTC = %ld", rtc_to_wall);
 	}
 
 	GTimerSource *timer_rtc_check = g_timer_source_new_seconds(5 * 60);

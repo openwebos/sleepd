@@ -156,10 +156,6 @@ main(int argc, char **argv)
 {
 	bool retVal;
 
-	// FIXME integrate this into TheOneInit()
-	LOGInit();
-	LOGSetHandler(LOGSyslog);
-
 	/*
 	 * Register a function to be able to gracefully handle termination signals
 	 * from the OS or other processes.
@@ -223,7 +219,8 @@ main(int argc, char **argv)
 
 				if (ret != NYX_ERROR_NONE)
 				{
-					SLEEPDLOG(LOG_CRIT, "Sleepd: Unable to open the nyx device system");
+					SLEEPDLOG_CRITICAL(MSGID_NYX_DEVICE_OPEN_FAIL, 1,
+							PMLOGKS(CAUSE,"Unable to open the nyx device system"), "");
 					abort();
 				}
 
@@ -241,21 +238,15 @@ main(int argc, char **argv)
 				LSCall(private_sh, "luna://com.palm.power/com/palm/power/chargerStatusQuery",
 				        "{}", ChargerStatus, NULL, NULL, &lserror);
 
-				SLEEPDLOG(LOG_INFO, "Sleepd daemon started\n");
+				SLEEPDLOG_DEBUG("Sleepd daemon started");
 
 				g_main_loop_run(mainloop);
-			}
-			else
-			{
-				SLEEPDLOG(LOG_CRIT, "Error in registering for luna-signal \"chargerStatus\"");
 			}
 		}
 	}
 	else
 	{
-		SLEEPDLOG(LOG_CRIT,
-		        "Fatal - Could not initialize sleepd.  Is LunaService Down?. %s",
-		        lserror.message);
+		SLEEPDLOG_CRITICAL(MSGID_SRVC_REGISTER_FAIL, 1, PMLOGKS(ERRTEXT,lserror.message), "Could not initialize sleepd");
 		LSErrorFree(&lserror);
 	}
 	g_main_loop_unref(mainloop);

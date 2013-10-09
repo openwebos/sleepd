@@ -53,7 +53,7 @@ SysfsGetString(const char *path, char *ret_string, size_t maxlen)
 	{
 		if (gerror)
 		{
-			SLEEPDLOG(LOG_CRIT, "%s: %s", __FUNCTION__, gerror->message);
+			SLEEPDLOG_DEBUG("SysfsGetString Error : %s", gerror->message);
 			g_error_free(gerror);
 		}
 
@@ -81,7 +81,7 @@ SysfsGetInt(const char *path, int *ret_data)
 	{
 		if (gerror)
 		{
-			SLEEPDLOG(LOG_CRIT, "%s: %s", __FUNCTION__, gerror->message);
+			SLEEPDLOG_DEBUG("SysfsGetInt Error : %s", gerror->message);
 			g_error_free(gerror);
 		}
 
@@ -92,8 +92,7 @@ SysfsGetInt(const char *path, int *ret_data)
 
 	if (endptr == contents)
 	{
-		SLEEPDLOG(LOG_CRIT, "%s: Invalid input in %s.",
-		          __FUNCTION__, path);
+		SLEEPDLOG_DEBUG("SysfsGetInt : Invalid input in %s.", path);
 	}
 	else
 	{
@@ -120,7 +119,7 @@ SysfsGetDouble(const char *path, double *ret_data)
 	{
 		if (gerror)
 		{
-			SLEEPDLOG(LOG_CRIT, "%s: %s", __FUNCTION__, gerror->message);
+			SLEEPDLOG_DEBUG("SysfsGetDouble Error : %s", gerror->message);
 			g_error_free(gerror);
 		}
 
@@ -131,8 +130,7 @@ SysfsGetDouble(const char *path, double *ret_data)
 
 	if (endptr == contents)
 	{
-		SLEEPDLOG(LOG_CRIT, "%s: Invalid input in %s.",
-		          __FUNCTION__, path);
+		SLEEPDLOG_DEBUG("SysfsGetDouble : Invalid input in %s.", path);
 	}
 	else
 	{

@@ -18,10 +18,12 @@
 
 #!/bin/sh
 
-echo -e "sleepd: System going to sleep now\n" | wall 
+PmLogCtl -s def sleepdscript info
+
+PmLogCtl -s logkv sleepdscript info "sleepd: System going to sleep now"
 
 # Initiate suspend
 echo mem > /sys/power/state
 
-echo -e "sleepd: System woke up.\n" | wall 
+PmLogCtl -s logkv sleepdscript info "sleepd: System woke up"
 

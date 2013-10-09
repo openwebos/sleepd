@@ -55,6 +55,10 @@ pkg_check_modules(NYXLIB REQUIRED nyx)
 include_directories(${NYXLIB_INCLUDE_DIRS})
 webos_add_compiler_flags(ALL ${NYXLIB_CFLAGS_OTHER})
 
+pkg_check_modules(PMLOGLIB REQUIRED PmLogLib)
+include_directories(${PMLOGLIB_INCLUDE_DIRS})
+webos_add_compiler_flags(ALL ${PMLOGLIB_CFLAGS_OTHER})
+
 # Nyxlib version 3.0.0 introduced an API break in nyx_system_reboot
 string(REPLACE "." ";" NYXV ${NYXLIB_VERSION})
 string(REPLACE "~" ";" NYXV "${NYXV}")
@@ -73,6 +77,8 @@ webos_add_compiler_flags(ALL -Wall)
 
 webos_add_linker_options(ALL --no-undefined)
 
+add_definitions(-DPMLOG_TRACES_ENABLED -DPMLOG_TRACE_COMPONENT="sleepd")
+
 # Build the sleepd executable
 include_directories(include/internal)
 
@@ -89,6 +95,7 @@ target_link_libraries(sleepd
                         ${CJSON_LDFLAGS}
                         ${POWERD_LDFLAGS}
                         ${NYXLIB_LDFLAGS}
+                        ${PMLOGLIB_LDFLAGS}
                         rt
                         pthread)
 

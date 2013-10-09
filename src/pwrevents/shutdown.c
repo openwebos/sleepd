@@ -375,7 +375,7 @@ client_vote(ShutdownClient *client, bool ack)
 static void
 client_vote_print(const char *key, ShutdownClient *client, void *data)
 {
-	SLEEPDLOG(LOG_INFO, "    %s %s %s @ %fs", client->id, client->name,
+	SLEEPDLOG_DEBUG("%s %s %s @ %fs", client->id, client->name,
 	          shutdown_reply_to_string(client->ack_shutdown),
 	          client->elapsed);
 }
@@ -389,7 +389,7 @@ client_list_print(GHashTable *client_table)
 {
 	int size = g_hash_table_size(client_table);
 
-	SLEEPDLOG(LOG_INFO, "clients:");
+	SLEEPDLOG_DEBUG( "clients:");
 
 	if (size > 0)
 	{
@@ -398,7 +398,7 @@ client_list_print(GHashTable *client_table)
 	}
 	else
 	{
-		SLEEPDLOG(LOG_INFO, "    No clients registered.");
+		SLEEPDLOG_DEBUG("No clients registered.");
 	}
 }
 
@@ -457,10 +457,8 @@ shutdown_state_dispatch(ShutdownEvent *event)
 		_assert(next_state >= gCurrentState->state);
 
 		if (next_state != gCurrentState->state)
-		{
-			SLEEPDLOG(LOG_DEBUG, "Shutdown: entering state: %s @ %fs",
-			          kStateMachine[next_state].name,
-			          g_timer_elapsed(shutdown_timer, NULL));
+		{    
+			SLEEPDLOG_DEBUG("Shutdown: entering state: %s @ %fs",kStateMachine[next_state].name,g_timer_elapsed(shutdown_timer, NULL));
 		}
 
 		gCurrentState = &kStateMachine[next_state];
@@ -483,7 +481,7 @@ send_shutdown_apps()
 
 	if (!retVal)
 	{
-		g_critical("%s Could not send shutdown applications", __FUNCTION__);
+		SLEEPDLOG_ERROR(MSGID_SHUTDOWN_APPS_SIG_FAIL, 0, "Could not send shutdown applications");
 		LSErrorPrint(&lserror, stderr);
 		LSErrorFree(&lserror);
 	}
@@ -506,7 +504,7 @@ send_shutdown_services()
 
 	if (!retVal)
 	{
-		g_critical("%s Could not send shutdown applications", __FUNCTION__);
+		SLEEPDLOG_ERROR(MSGID_SHUTDOWN_SRVC_SIG_FAIL, 0, "Could not send shutdown Services");
 		LSErrorPrint(&lserror, stderr);
 		LSErrorFree(&lserror);
 	}
@@ -657,7 +655,7 @@ state_shutdown_apps_process(ShutdownEvent *event, ShutdownState *next)
 	{
 		if (timeout)
 		{
-			SLEEPDLOG(LOG_CRIT, "Shutdown apps timed out: ");
+			SLEEPDLOG_DEBUG("Shutdown apps timed out");
 		}
 
 		client_list_print(sClientList->applications);
@@ -729,7 +727,7 @@ state_shutdown_services_process(ShutdownEvent *event, ShutdownState *next)
 	{
 		if (timeout)
 		{
-			SLEEPDLOG(LOG_CRIT, "Shutdown services timed out: ");
+			SLEEPDLOG_DEBUG("Shutdown services timed out");
 		}
 
 		client_list_print(sClientList->services);
@@ -764,8 +762,7 @@ state_shutdown_action(ShutdownEvent *event, ShutdownState *next)
 
 	if (!retVal)
 	{
-		g_critical("%s: Could not send shutdown success message",
-		           __FUNCTION__);
+		SLEEPDLOG_WARNING(MSGID_SHUTDOWN_REPLY_FAIL, 0, "Could not send shutdown success message");
 	}
 
 	if (shutdown_message)
@@ -799,8 +796,7 @@ send_reply(LSHandle *sh, LSMessage *message,
 
 	if (!retVal)
 	{
-		g_critical("Could not send reply with payload %s",
-		           payload);
+		SLEEPDLOG_WARNING(MSGID_LSMSG_REPLY_FAIL, 0, "Could not send reply with payload : %s", payload);
 	}
 
 	g_free(payload);
@@ -843,7 +839,7 @@ initiateShutdown(LSHandle *sh, LSMessage *message, void *user_data)
 static bool
 TESTresetShutdownState(LSHandle *sh, LSMessage *message, void *user_data)
 {
-	g_debug("Resetting shutdown state.");
+	SLEEPDLOG_DEBUG("Resetting shutdown state");
 
 	gCurrentState = &kStateMachine[kPowerShutdownNone];
 	return true;
@@ -984,7 +980,7 @@ shutdownApplicationsRegister(LSHandle *sh, LSMessage *message,
 
 	if (!retVal)
 	{
-		g_critical("LSSubscriptionAdd failed.");
+		SLEEPDLOG_WARNING(MSGID_LSSUBSCRI_ADD_FAIL, 0,"LSSubscriptionAdd failed for applications");
 		LSErrorPrint(&lserror, stderr);
 		LSErrorFree(&lserror);
 	}
@@ -1033,7 +1029,7 @@ shutdownServicesRegister(LSHandle *sh, LSMessage *message,
 
 	if (!retVal)
 	{
-		g_critical("LSSubscriptionAdd failed.");
+		SLEEPDLOG_WARNING(MSGID_LSSUBSCRI_ADD_FAIL, 0,"LSSubscriptionAdd failed for services");
 		LSErrorPrint(&lserror, stderr);
 		LSErrorFree(&lserror);
 	}

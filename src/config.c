@@ -40,6 +40,7 @@
 #include "config.h"
 #include "init.h"
 #include "defines.h"
+#include "logging.h"
 
 /**
  * default sleepd config
@@ -74,7 +75,7 @@ do {                                                            \
     intVal = g_key_file_get_integer(keyfile,cat,name,&gerror);  \
     if (!gerror) {                                              \
         var = intVal;                                           \
-        g_debug(#var " = %d", intVal);                          \
+        SLEEPDLOG_DEBUG(#var " = %d", intVal);                          \
     }                                                           \
     else { g_error_free(gerror); }                              \
 } while (0)
@@ -86,7 +87,7 @@ do {                                                            \
     boolVal = g_key_file_get_boolean(keyfile,cat,name,&gerror); \
     if (!gerror) {                                              \
         var = boolVal;                                          \
-        g_debug(#var " = %s",                                   \
+        SLEEPDLOG_DEBUG(#var " = %s",                                   \
                   boolVal ? "true" : "false");                  \
     }                                                           \
     else { g_error_free(gerror); }                              \
@@ -153,8 +154,7 @@ config_init(void)
 	}
 	else
 	{
-		g_warning("%s cannot load config file from %s",
-		          __FUNCTION__, config_path);
+		SLEEPDLOG_WARNING(MSGID_CONFIG_FILE_LOAD_ERR, 1, PMLOGKS(PATH,config_path), "cannot load config file");
 	}
 
 	g_free(config_path);

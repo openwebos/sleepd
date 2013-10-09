@@ -166,7 +166,7 @@ PwrEventClientRegister(ClientUID uid)
 		return false;
 	}
 
-	TRACE("\t%s Registering client %s\n", __FUNCTION__, uid);
+	PMLOG_TRACE("Registering client %s", uid);
 	g_hash_table_replace(sClientList, g_strdup(uid), clientInfo);
 	return true;
 }
@@ -439,7 +439,7 @@ PwrEventClientTablePrintHelper(gpointer key, gpointer value, gpointer data)
 		return;
 	}
 
-	g_log(G_LOG_DOMAIN, lvl, "    %s/%s - %s (%s) - NACKS: %d/%d\n",
+	SLEEPDLOG_DEBUG(" %s/%s - %s (%s) - NACKS: %d/%d\n",
 	      info->requireSuspendRequest ?
 	      AckToString(info->ackSuspendRequest) : "###",
 	      info->requirePrepareSuspend ?
@@ -456,7 +456,7 @@ PwrEventClientTablePrintHelper(gpointer key, gpointer value, gpointer data)
 void
 PwrEventClientTablePrint(GLogLevelFlags lvl)
 {
-	g_log(G_LOG_DOMAIN, lvl, "PwrEvent clients:");
+	SLEEPDLOG_DEBUG("PwrEvent clients:");
 	g_hash_table_foreach(sClientList, PwrEventClientTablePrintHelper,
 	                     GUINT_TO_POINTER(lvl));
 }
@@ -480,8 +480,7 @@ _PwrEventClientPrintNACKHelper(gpointer key, gpointer value, gpointer ctx)
 
 	if (num_nacks > 0)
 	{
-		SLEEPDLOG(LOG_CRIT, "    %s (%s) NACKs: %d",
-		          info->clientName, info->clientId, num_nacks);
+		SLEEPDLOG_DEBUG( " %s (%s) NACKs: %d", info->clientName, info->clientId, num_nacks);
 	}
 }
 
@@ -515,7 +514,7 @@ PwrEventClientSuspendRequestRegister(ClientUID uid, bool reg)
 
 	if (!info)
 	{
-		TRACE("\t%s could not find uid %s\n", __FUNCTION__, uid);
+		PMLOG_TRACE("SuspendRequestRegister : could not find uid %s", uid);
 		return;
 	}
 
@@ -525,8 +524,7 @@ PwrEventClientSuspendRequestRegister(ClientUID uid, bool reg)
 		sNumSuspendRequest += reg ? 1 : -1;
 	}
 
-	SLEEPDLOG(LOG_NOTICE, "%s %sregistering for suspend_request",
-	          info->clientName, reg ? "" : "de-");
+	SLEEPDLOG_DEBUG("%s %sregistering for suspend_request", info->clientName, reg ? "" : "de-");
 }
 
 /**
@@ -544,7 +542,7 @@ PwrEventClientPrepareSuspendRegister(ClientUID uid, bool reg)
 
 	if (!info)
 	{
-		TRACE("\t%s could not find uid %s\n", __FUNCTION__, uid);
+		PMLOG_TRACE("PrepareSuspendRegister: could not find uid %s", uid);
 		return;
 	}
 
@@ -554,8 +552,7 @@ PwrEventClientPrepareSuspendRegister(ClientUID uid, bool reg)
 		sNumPrepareSuspend += reg ? 1 : -1;
 	}
 
-	SLEEPDLOG(LOG_NOTICE, "%s %sregistering for prepare_suspend",
-	          info->clientName, reg ? "" : "de-");
+	SLEEPDLOG_DEBUG("%s %sregistering for prepare_suspend", info->clientName, reg ? "" : "de-");
 }
 
 
@@ -619,17 +616,16 @@ PwrEventVoteSuspendRequest(ClientUID uid, bool ack)
 
 	if (!info)
 	{
-		TRACE("\t%s could not find uid %s\n", __FUNCTION__, uid);
+		PMLOG_TRACE("VoteSuspendRequest : could not find uid %s", uid);
 		return false;
 	}
 
 	if (!ack)
 	{
-		g_warning("%s(%s) SuspendRequestNACK.", info->clientName, info->clientId);
+		SLEEPDLOG_DEBUG("%s(%s) SuspendRequestNACK.", info->clientName, info->clientId);
 	}
 
-	TRACE("%s %sACK suspend response.\n",
-	      info->clientName, ack ? "" : "N");
+	PMLOG_TRACE("%s %sACK suspend response",info->clientName, ack ? "" : "N");
 
 	if (info->ackSuspendRequest != ack)
 	{
@@ -656,17 +652,16 @@ PwrEventVotePrepareSuspend(ClientUID uid, bool ack)
 
 	if (!info)
 	{
-		TRACE("\t%s could not find uid %s\n", __FUNCTION__, uid);
+		PMLOG_TRACE("VotePrepareSuspend : could not find uid %s", uid);
 		return false;
 	}
 
 	if (!ack)
 	{
-		g_warning("%s(%s) PrepareSuspendNACK", info->clientName, info->clientId);
+		SLEEPDLOG_DEBUG("%s(%s) PrepareSuspendNACK", info->clientName, info->clientId);
 	}
 
-	TRACE("%s %sACK prepare suspend.\n",
-	      info->clientName, ack ? "" : "N");
+	PMLOG_TRACE("%s %sACK prepare suspend",info->clientName, ack ? "" : "N");
 
 	if (info->ackPrepareSuspend != ack)
 	{

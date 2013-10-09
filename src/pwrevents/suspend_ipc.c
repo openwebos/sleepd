@@ -292,7 +292,7 @@ identifyCallback(LSHandle *sh, LSMessage *message, void *data)
 	char *reply = g_strdup_printf(
 	                  "{\"subscribed\":true,\"clientId\":\"%s\"}", clientId);
 
-	g_debug("Pwrevents received identify, reply with %s", reply);
+	SLEEPDLOG_DEBUG("Pwrevents received identify, reply with %s", reply);
 
 	retVal = LSMessageReply(sh, message, reply, &lserror);
 
@@ -340,7 +340,7 @@ end:
 bool
 forceSuspendCallback(LSHandle *sh, LSMessage *message, void *user_data)
 {
-	TRACE("\tReceived force suspend\n");
+	PMLOG_TRACE("Received force suspend");
 	TriggerSuspend("forced suspend", kPowerEventForceSuspend);
 
 	LSMessageReplySuccess(sh, message);
@@ -359,7 +359,7 @@ forceSuspendCallback(LSHandle *sh, LSMessage *message, void *user_data)
 bool
 TESTSuspendCallback(LSHandle *sh, LSMessage *message, void *user_data)
 {
-	TRACE("\tReceived TESTSuspend\n");
+	PMLOG_TRACE("Received TESTSuspend");
 	ScheduleIdleCheck(100, false);
 	LSMessageReplySuccess(sh, message);
 	return true;
@@ -425,7 +425,7 @@ SendResume(int resumetype, char *message)
 	LSError lserror;
 	LSErrorInit(&lserror);
 
-	SLEEPDLOG(LOG_INFO, "%s: sending \"resume\" because %s", __func__, message);
+	SLEEPDLOG_DEBUG("sending \"resume\" because %s", message);
 
 	char *payload = g_strdup_printf(
 	                    "{\"resumetype\":%d}", resumetype);
@@ -455,7 +455,7 @@ SendSuspended(const char *message)
 	LSError lserror;
 	LSErrorInit(&lserror);
 
-	SLEEPDLOG(LOG_INFO, "%s: sending \"suspended\" because %s", __func__, message);
+	SLEEPDLOG_DEBUG("sending \"suspended\" because %s", message);
 
 	retVal = LSSignalSend(GetLunaServiceHandle(),
 	                      "luna://com.palm.sleep/com/palm/power/suspended",
@@ -485,7 +485,6 @@ suspendRequestRegister(LSHandle *sh, LSMessage *message, void *data)
 {
 	bool reg;
 
-	g_debug("PwrEvent %s %s", __FUNCTION__, LSMessageGetPayload(message));
 
 	struct json_object *object = json_tokener_parse(
 	                                 LSMessageGetPayload(message));
@@ -513,9 +512,7 @@ suspendRequestRegister(LSHandle *sh, LSMessage *message, void *data)
 
 	reg = json_object_get_boolean(json_reg);
 
-	g_debug("PwrEvent received %s ---%s from %s",
-	        LSMessageGetPayload(message),
-	        __FUNCTION__, clientId);
+    SLEEPDLOG_DEBUG("RequestRegister - PwrEvent received from %s", clientId );
 
 	PwrEventClientSuspendRequestRegister(clientId, reg);
 
@@ -549,7 +546,6 @@ suspendRequestAck(LSHandle *sh, LSMessage *message, void *data)
 {
 	bool ack;
 
-	g_debug("PwrEvent %s %s", __FUNCTION__, LSMessageGetPayload(message));
 
 	struct json_object *object = json_tokener_parse(
 	                                 LSMessageGetPayload(message));
@@ -657,7 +653,7 @@ prepareSuspendRegister(LSHandle *sh, LSMessage *message, void *data)
 
 	reg = json_object_get_boolean(json_reg);
 
-	g_debug("PwrEvent %s reg=%d from %s", __FUNCTION__, reg, clientId);
+	SLEEPDLOG_DEBUG("SuspendRegister - PwrEvent : reg=%d from %s", reg, clientId);
 
 	PwrEventClientPrepareSuspendRegister(clientId, reg);
 
@@ -814,7 +810,7 @@ SuspendIPCInit(void)
 
 	if (!retVal)
 	{
-		SLEEPDLOG(LOG_CRIT, "Error in setting cancel function");
+		SLEEPDLOG_WARNING(MSGID_LS_SUBSCRIB_SETFUN_FAIL, 0, "Error in setting cancel function");
 		goto ls_error;
 	}
 

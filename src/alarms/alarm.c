@@ -171,7 +171,7 @@ alarmAdd(LSHandle *sh, LSMessage *message, void *ctx)
 		goto malformed_json;
 	}
 
-	SLEEPDLOG(LOG_DEBUG, "%s: %s", __FUNCTION__, LSMessageGetPayload(message));
+	SLEEPDLOG_DEBUG("%s",LSMessageGetPayload(message));
 
 	serviceName = json_object_get_string(
 	                  json_object_object_get(object, "serviceName"));
@@ -196,9 +196,7 @@ alarmAdd(LSHandle *sh, LSMessage *message, void *ctx)
 
 	nyx_system_query_rtc_time(GetNyxSystemDevice(), &rtctime);
 
-	SLEEPDLOG(LOG_INFO, "%s: (%s %s %s) in %s (rtc %ld)", __FUNCTION__,
-	          serviceName, applicationName, key, rel_time, rtctime);
-
+	SLEEPDLOG_DEBUG("alarmAdd(): (%s %s %s) in %s (rtc %ld)",serviceName, applicationName, key, rel_time, rtctime);
 	struct json_object *subscribe_json =
 	    json_object_object_get(object, "subscribe");
 
@@ -350,7 +348,7 @@ alarmAddCalendar(LSHandle *sh, LSMessage *message, void *ctx)
 		goto malformed_json;
 	}
 
-	SLEEPDLOG(LOG_DEBUG, "%s: %s", __FUNCTION__, LSMessageGetPayload(message));
+	SLEEPDLOG_DEBUG("alarmAddCalendar() : %s",LSMessageGetPayload(message));
 
 	serviceName = json_object_get_string(
 	                  json_object_object_get(object, "serviceName"));
@@ -396,8 +394,7 @@ alarmAddCalendar(LSHandle *sh, LSMessage *message, void *ctx)
 		goto invalid_format;
 	}
 
-	SLEEPDLOG(LOG_INFO, "%s: (%s %s %s) at %s %s", __FUNCTION__,
-	          serviceName, applicationName, key, cal_date, cal_time);
+	SLEEPDLOG_DEBUG("alarmAddCalendar() : (%s %s %s) at %s %s", serviceName, applicationName, key, cal_date, cal_time);
 
 	struct json_object *subscribe_json =
 	    json_object_object_get(object, "subscribe");
@@ -647,7 +644,7 @@ alarmRemove(LSHandle *sh, LSMessage *message, void *ctx)
 		goto malformed_json;
 	}
 
-	SLEEPDLOG(LOG_DEBUG, "%s: %s", __FUNCTION__, LSMessageGetPayload(message));
+	SLEEPDLOG_DEBUG("alarmRemove() : %s",LSMessageGetPayload(message));
 
 	int alarmId =
 	    json_object_get_int(json_object_object_get(object, "alarmId"));
@@ -719,8 +716,6 @@ cleanup:
 static bool
 internalAlarmFired(LSHandle *sh, LSMessage *message, void *ctx)
 {
-	g_debug(LOG_DOMAIN "%s ", __FUNCTION__);
-
 	update_alarms();
 	return true;
 }
@@ -739,7 +734,7 @@ LSMethod time_methods[] =
 static void
 alarm_free(_Alarm *a)
 {
-	g_debug("Freeing alarm with id %d", a->id);
+	SLEEPDLOG_DEBUG("Freeing alarm with id %d", a->id);
 
 	g_free(a->serviceName);
 	g_free(a->applicationName);
@@ -783,11 +778,10 @@ alarm_print(_Alarm *a)
 	gmtime_r(&a->expiry, &tm);
 	asctime_r(&tm, buf);
 
-	SLEEPDLOG(LOG_DEBUG, "(%s, %s) set alarm id %d @ %s",
-	          a->serviceName ? : "null",
-	          a->applicationName ? : "null",
-	          a->id,
-	          buf);
+	SLEEPDLOG_DEBUG("(%s,%s) set alarm id %d @ %s",
+		  a->serviceName ? : "null",
+		  a->applicationName ? : "null",
+		  a->id, buf);
 }
 
 static void
@@ -854,7 +848,8 @@ alarm_read_db(void)
 
 			if (!retVal)
 			{
-				g_critical("%s: could not add alarm.", __FUNCTION__);
+				SLEEPDLOG_WARNING(MSGID_ALARM_NOT_SET, 3, PMLOGKFV(ALARM_ID,"%d",alarmId),
+						  PMLOGKS(SRVC_NAME,service), PMLOGKS(APP_NAME,app), "could not add alarm");
 			}
 
 clean_round:
@@ -1118,8 +1113,8 @@ fire_alarm(_Alarm *alarm)
 
 	nyx_system_query_rtc_time(GetNyxSystemDevice(), &rtctime);
 
-	SLEEPDLOG(LOG_INFO, "Alarm (%s %s %s) fired at %s (rtc %ld)",
-	          alarm->serviceName, alarm->applicationName, alarm->key, buf_alarm, rtctime);
+	SLEEPDLOG_DEBUG("fire_alarm() : Alarm (%s %s %s) fired at %s (rtc %ld)",alarm->serviceName,
+			alarm->applicationName, alarm->key, buf_alarm, rtctime);
 
 	GString *payload = g_string_sized_new(255);
 	g_string_append_printf(payload, "{\"alarmId\":%d,\"fired\":true", alarm->id);

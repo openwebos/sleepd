@@ -35,6 +35,7 @@
 
 #include "init.h"
 #include "sysfs.h"
+#include "logging.h"
 
 #define PRINT_INTERVAL_MS 60000
 
@@ -139,15 +140,15 @@ void read_proc_loadavg()
 	{
 		if (gerror)
 		{
-			g_critical("%s: %s", __FUNCTION__, gerror->message);
+			SLEEPDLOG_WARNING(MSGID_READ_PROC_LOADAVG_ERR, 1 , PMLOGKS(ERRTEXT,gerror->message), "");
 			g_error_free(gerror);
 		}
 	}
 
 	arr_file = g_strsplit_set(contents, " ", -1);
 
-	g_message("loadavg:1m:%s:5m:%s:15m:%s kr/ke:%s pid:%s", arr_file[0],
-	          arr_file[1], arr_file[2], arr_file[3], arr_file[4]);
+	SLEEPDLOG_DEBUG("loadavg:1m:%s:5m:%s:15m:%s kr/ke:%s pid:%s", arr_file[0],
+	   arr_file[1], arr_file[2], arr_file[3], arr_file[4]);
 
 	g_strfreev(arr_file);
 	g_free(contents);
@@ -171,7 +172,7 @@ void read_proc_diskstats()
 	{
 		if (gerror)
 		{
-			g_critical("%s: %s", __FUNCTION__, gerror->message);
+			SLEEPDLOG_WARNING(MSGID_READ_PROC_DISKSTAT_ERR, 1 , PMLOGKS(ERRTEXT,gerror->message), "");
 			g_error_free(gerror);
 		}
 	}
@@ -269,7 +270,7 @@ void read_proc_diskstats()
 		g_strfreev(arr_line);
 	}
 
-	g_message("io:%s", all_devices);
+	SLEEPDLOG_DEBUG("io:%s", all_devices);
 
 	g_free(all_devices);
 	g_strfreev(arr_file);
@@ -294,7 +295,7 @@ void read_proc_stat()
 	{
 		if (gerror)
 		{
-			g_critical("%s: %s", __FUNCTION__, gerror->message);
+			SLEEPDLOG_WARNING(MSGID_READ_PROC_STAT_ERR, 1, PMLOGKS(ERRTEXT,gerror->message), "");
 			g_error_free(gerror);
 		}
 	}
@@ -324,7 +325,7 @@ void read_proc_stat()
 	}
 
 	arr_line = g_strsplit(arr_file[0], " ", -1); // cpu0
-	g_message("%s_stat: u:%s ulp:%s sys:%s i:%s iow:%s int:%s sint:%s cs:%s pr:%s",
+	SLEEPDLOG_DEBUG("%s_stat: u:%s ulp:%s sys:%s i:%s iow:%s int:%s sint:%s cs:%s pr:%s",
 	          //path,
 	          arr_line[0],
 	          arr_line[2], // arr_line[1] is an empty string
@@ -365,7 +366,7 @@ void read_proc_meminfo()
 	{
 		if (gerror)
 		{
-			g_critical("%s: %s", __FUNCTION__, gerror->message);
+			SLEEPDLOG_WARNING(MSGID_READ_PROC_MEMINFO_ERR, 1 , PMLOGKS(ERRTEXT,gerror->message), "");
 			g_error_free(gerror);
 		}
 	}
@@ -407,7 +408,7 @@ void read_proc_meminfo()
 		g_strfreev(arr_line);
 	}
 
-	g_message("mem:mt:%s mf:%s st:%s sf:%s", g_strstrip(MemTotal),
+	SLEEPDLOG_DEBUG("mem:mt:%s mf:%s st:%s sf:%s", g_strstrip(MemTotal),
 	          g_strstrip(MemFree), g_strstrip(SwapTotal), g_strstrip(SwapFree));
 
 	g_free(MemTotal);
@@ -436,7 +437,7 @@ void read_proc_net_dev()
 	{
 		if (gerror)
 		{
-			g_critical("%s: %s", __FUNCTION__, gerror->message);
+			SLEEPDLOG_WARNING(MSGID_READ_PROC_NETDEV_ERR, 1, PMLOGKS(ERRTEXT,gerror->message), "");
 			g_error_free(gerror);
 		}
 	}
@@ -481,7 +482,7 @@ void read_proc_net_dev()
 				++nth_field;
 			}
 
-			g_message("net:%s:rp:%s tp:%s",
+			SLEEPDLOG_DEBUG("net:%s:rp:%s tp:%s",
 			          //path,
 			          arr_line[0],
 			          arr_fields[received_packets], // hack, values seem to start from arr_line[2]
@@ -523,8 +524,8 @@ sawmill_logger_update(gpointer data)
 		get_battery_coulomb_reading(&rc, &c);
 		sTimeOnPrint = time_now_ms();
 		long unsigned int diff_awake = sTimeOnPrint - sTimeOnWake;
-		g_message("%s: raw_coulomb: %f coulomb: %f time_awake_ms: %lu time_asleep_ms: %lu time_screen_on_ms: %lu time_screen_off_ms: %lu",
-		          __func__,
+
+		SLEEPDLOG_DEBUG("Logger Update : raw_coulomb: %f coulomb: %f time_awake_ms: %lu time_asleep_ms: %lu time_screen_on_ms: %lu time_screen_off_ms: %lu",
 		          rc, c,
 		          sTotalMSAwake + diff_awake,
 		          sTotalMSAsleep,

@@ -24,6 +24,7 @@
 #include "config.h"
 #include "machine.h"
 #include "debug.h"
+#include "logging.h"
 
 typedef struct _GNamedHookList
 {
@@ -42,7 +43,7 @@ HookInit(gpointer func)
 
 	if (ret < 0)
 	{
-		g_error("%s: Could not initialize %p\n", __FUNCTION__, func);
+		SLEEPDLOG_ERROR(MSGID_HOOKINIT_FAIL, 0, "Could not initialize %p", func);
 	}
 }
 
@@ -79,7 +80,7 @@ NamedInitFuncAdd(const char *name, InitFuncPriority priority, InitFunc func,
 
 		if (!namedInitFuncs)
 		{
-			g_error("%s: Out of memory on initialization.\n", __FUNCTION__);
+			SLEEPDLOG_ERROR(MSGID_NAMED_INIT_FUNC_OOM, 0, "Out of memory on initialization");
 			abort();
 		}
 	}
@@ -90,7 +91,7 @@ NamedInitFuncAdd(const char *name, InitFuncPriority priority, InitFunc func,
 
 		if (!namedHookList)
 		{
-			g_error("%s: Out of memory on initialization.\n", __FUNCTION__);
+			SLEEPDLOG_ERROR(MSGID_NAMED_HOOK_LIST_OOM, 0, "Out of memory on initialization");
 			abort();
 		}
 
@@ -118,7 +119,7 @@ void
 GProritizedHookPrint(GHook *hook, gpointer data)
 {
 	GPrioritizedHook *gphook = (GPrioritizedHook *)hook;
-	g_info("%d. %s", gphook->priority, gphook->func_name);
+	SLEEPDLOG_DEBUG("%d. %s", gphook->priority, gphook->func_name);
 }
 
 void
@@ -127,7 +128,7 @@ GHookListPrint(gpointer key, gpointer value, gpointer data)
 	const char *hookName = (const char *)key;
 	GHookList *hookList = (GHookList *)value;
 
-	g_info("InitList: %s", hookName);
+	SLEEPDLOG_DEBUG("InitList: %s", hookName);
 	g_hook_list_marshal(hookList, TRUE, GProritizedHookPrint, NULL);
 }
 
@@ -162,7 +163,6 @@ TheOneInit(void)
 
 	if (commonInitFuncs)
 	{
-		g_info("\n%s Running common Inits", __FUNCTION__);
 		g_hook_list_invoke(commonInitFuncs, FALSE);
 	}
 }

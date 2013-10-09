@@ -448,9 +448,8 @@ _activity_print(struct timespec *from, struct timespec *now)
 
 		diff_ms = diff.tv_sec * 1000 + diff.tv_nsec / 1000000;
 
-		SLEEPDLOG(LOG_INFO, "(%s) for %d ms, expiry in %d ms",
-		          a->activity_id, a->duration_ms,
-		          diff_ms);
+		SLEEPDLOG_DEBUG("_activity_print() : (%s) for %d ms, expiry in %d ms", a->activity_id, a->duration_ms,
+				diff_ms);
 	}
 
 	pthread_mutex_unlock(&activity_mutex);
@@ -521,8 +520,7 @@ PwrEventActivityStart(const char *activity_id, int duration_ms)
 
 	retVal = _activity_start(activity_id, duration_ms);
 
-	SLEEPDLOG(LOG_INFO, "%s: (%s) for %dms => %s",
-	          __FUNCTION__, activity_id, duration_ms, retVal ? "true" : "false");
+	SLEEPDLOG_DEBUG("PwrEventActivityStart() : (%s) for %dms => %s", activity_id, duration_ms, retVal ? "true" : "false");
 
 	if (retVal)
 	{
@@ -546,7 +544,8 @@ PwrEventActivityStart(const char *activity_id, int duration_ms)
 void
 PwrEventActivityStop(const char *activity_id)
 {
-	SLEEPDLOG(LOG_INFO, "%s: (%s)", __FUNCTION__, activity_id);
+	SLEEPDLOG_DEBUG("PwrEventActivityStop() : (%s)", activity_id);
+
 	_activity_stop(activity_id);
 
 	ScheduleIdleCheck(0, false);
@@ -580,10 +579,8 @@ PwrEventActivityRemoveExpired(struct timespec *now)
 				LSError lserror;
 				LSErrorInit(&lserror);
 
-				SLEEPDLOG(LOG_WARNING,
-				          "%s Long activity %s of duration %d ms expired... sending RDX report.",
-				          __FUNCTION__,
-				          a->activity_id, a->duration_ms);
+				SLEEPDLOG_DEBUG("Long activity %s of duration %d ms expired... sending RDX report.",
+					a->activity_id, a->duration_ms);
 			}
 
 			_activity_stop_activity(a);

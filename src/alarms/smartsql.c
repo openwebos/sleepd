@@ -48,50 +48,53 @@ _check_integrity(sqlite3 *db)
 	int rc;
 
 	sqlite3_stmt *stmt;
+	const char *reason = "Unknown Failure";
+
 	const char *tail;
+	bool returnValue = false;
+
 	rc = sqlite3_prepare_v2(db, cmd, -1, &stmt, &tail);
 
-	if (!stmt)
+	if (stmt)
 	{
-		goto fail;
+		rc = sqlite3_step(stmt);
+
+		if (rc == SQLITE_OK)
+		{
+			returnValue = true;
+		}
+		else if (rc == SQLITE_ROW)
+		{
+			int columns = sqlite3_data_count(stmt);
+
+			if (columns == 1)
+			{
+				const char *column_text = (const char *) sqlite3_column_text(stmt,0);
+				returnValue = (strcmp(column_text,"ok") == 0);
+			}
+			else
+			{
+				reason = "Invalid column count";
+			}
+		}
+		else
+		{
+			reason = "Failed to step";
+		}
+	}
+	else
+	{
+		reason = "Failed to prepare statement";
 	}
 
-	rc = sqlite3_step(stmt);
-
-	if (rc == SQLITE_OK)
-	{
-		goto success;
-	}
-
-	if (rc != SQLITE_ROW)
-	{
-		goto fail;
-	}
-
-	int columns = sqlite3_data_count(stmt);
-
-	if (columns != 1)
-	{
-		goto fail;
-	}
-
-	const char *column_text = (const char *)sqlite3_column_text(stmt, 0);
-
-	// A successful, no-error integrity check will be "ok" - all other strings imply failure
-	if (strcmp(column_text, "ok") == 0)
-	{
-		goto success;
-	}
-
-	goto fail;
-
-success:
 	sqlite3_finalize(stmt);
-	return true;
-fail:
-	sqlite3_finalize(stmt);
-	fprintf(stderr, "integrity check failed");
-	return false;
+
+	if (!returnValue)
+	{
+		SLEEPDLOG_WARNING(MSGID_INTEGRITY_CHK_FAIL, 1, PMLOGKS(CAUSE, reason), "Integrity check failed");
+	}
+
+	return returnValue;
 }
 
 bool
@@ -105,7 +108,7 @@ smart_sql_exec(sqlite3 *db, const char *cmd)
 
 	if (!stmt)
 	{
-		g_warning("%s: sqlite3_prepare error %d for cmd \"%s\"", __FUNCTION__, rc, cmd);
+		SLEEPDLOG_WARNING(MSGID_SQLITE_PREPARE_ERR, 2, PMLOGKFV(ERRCODE,"%d",rc), PMLOGKS(COMMAND,cmd), "");
 		return false;
 	}
 
@@ -113,7 +116,7 @@ smart_sql_exec(sqlite3 *db, const char *cmd)
 
 	if (rc != SQLITE_DONE)
 	{
-		g_warning("%s: sqlite3_step error %d for cmd \"%s\"", __FUNCTION__, rc, cmd);
+		SLEEPDLOG_WARNING(MSGID_SQLITE_STEP_ERR, 2, PMLOGKFV(ERRCODE,"%d",rc), PMLOGKS(COMMAND,cmd), "");
 		sqlite3_finalize(stmt);
 		return false;
 	}
@@ -152,7 +155,7 @@ _open(const char *path)
 
 	if (!retVal)
 	{
-		fprintf(stderr, "Could not set syncoff on %s\n", path);
+		SLEEPDLOG_WARNING(MSGID_SET_SYNCOFF_ERR, 2, PMLOGKS(CAUSE,"Could not set syncoff on path"), PMLOGKS(PATH,path), "");
 	}
 
 	return db;
@@ -180,7 +183,7 @@ smart_sql_open(const char *path, sqlite3 **ret_db)
 
 	if (!retVal)
 	{
-		SLEEPDLOG(LOG_ERR, "%s: %s corrupted... clearing.", __FUNCTION__, path);
+		SLEEPDLOG_ERROR(MSGID_DB_INTEGRITY_CHK_ERR, 1, PMLOGKS(PATH,path), "Db corrupted");
 
 		_close(db);
 
