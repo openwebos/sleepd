@@ -69,8 +69,8 @@ _check_integrity(sqlite3 *db)
 
 			if (columns == 1)
 			{
-				const char *column_text = (const char *) sqlite3_column_text(stmt,0);
-				returnValue = (strcmp(column_text,"ok") == 0);
+				const char *column_text = (const char *) sqlite3_column_text(stmt, 0);
+				returnValue = (strcmp(column_text, "ok") == 0);
 			}
 			else
 			{
@@ -91,7 +91,8 @@ _check_integrity(sqlite3 *db)
 
 	if (!returnValue)
 	{
-		SLEEPDLOG_WARNING(MSGID_INTEGRITY_CHK_FAIL, 1, PMLOGKS(CAUSE, reason), "Integrity check failed");
+		SLEEPDLOG_WARNING(MSGID_INTEGRITY_CHK_FAIL, 1, PMLOGKS(CAUSE, reason),
+		                  "Integrity check failed");
 	}
 
 	return returnValue;
@@ -108,7 +109,8 @@ smart_sql_exec(sqlite3 *db, const char *cmd)
 
 	if (!stmt)
 	{
-		SLEEPDLOG_WARNING(MSGID_SQLITE_PREPARE_ERR, 2, PMLOGKFV(ERRCODE,"%d",rc), PMLOGKS(COMMAND,cmd), "");
+		SLEEPDLOG_WARNING(MSGID_SQLITE_PREPARE_ERR, 2, PMLOGKFV(ERRCODE, "%d", rc),
+		                  PMLOGKS(COMMAND, cmd), "");
 		return false;
 	}
 
@@ -116,7 +118,8 @@ smart_sql_exec(sqlite3 *db, const char *cmd)
 
 	if (rc != SQLITE_DONE)
 	{
-		SLEEPDLOG_WARNING(MSGID_SQLITE_STEP_ERR, 2, PMLOGKFV(ERRCODE,"%d",rc), PMLOGKS(COMMAND,cmd), "");
+		SLEEPDLOG_WARNING(MSGID_SQLITE_STEP_ERR, 2, PMLOGKFV(ERRCODE, "%d", rc),
+		                  PMLOGKS(COMMAND, cmd), "");
 		sqlite3_finalize(stmt);
 		return false;
 	}
@@ -155,7 +158,8 @@ _open(const char *path)
 
 	if (!retVal)
 	{
-		SLEEPDLOG_WARNING(MSGID_SET_SYNCOFF_ERR, 2, PMLOGKS(CAUSE,"Could not set syncoff on path"), PMLOGKS(PATH,path), "");
+		SLEEPDLOG_WARNING(MSGID_SET_SYNCOFF_ERR, 2, PMLOGKS(CAUSE,
+		                  "Could not set syncoff on path"), PMLOGKS(PATH, path), "");
 	}
 
 	return db;
@@ -183,16 +187,24 @@ smart_sql_open(const char *path, sqlite3 **ret_db)
 
 	if (!retVal)
 	{
-		SLEEPDLOG_ERROR(MSGID_DB_INTEGRITY_CHK_ERR, 1, PMLOGKS(PATH,path), "Db corrupted");
+		SLEEPDLOG_ERROR(MSGID_DB_INTEGRITY_CHK_ERR, 1, PMLOGKS(PATH, path),
+		                "Db corrupted");
 
 		_close(db);
 
 		char *journal = g_strdup_printf("%s-journal", path);
-                if ( journal != NULL )
-		    remove(journal);
+
+		if (journal != NULL)
+		{
+			remove(journal);
+		}
+
 		remove(path);
-                if ( journal != NULL )
-		    g_free(journal);
+
+		if (journal != NULL)
+		{
+			g_free(journal);
+		}
 
 		db = _open(path);
 

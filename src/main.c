@@ -207,8 +207,8 @@ main(int argc, char **argv)
 			 * device.
 			 */
 			retVal = LSCall(private_sh, "luna://com.palm.lunabus/signal/addmatch",
-				        "{\"category\":\"/com/palm/power\","
-				        "\"method\":\"USBDockStatus\"}", ChargerStatus, NULL, NULL, &lserror);
+			                "{\"category\":\"/com/palm/power\","
+			                "\"method\":\"USBDockStatus\"}", ChargerStatus, NULL, NULL, &lserror);
 
 			if (retVal)
 			{
@@ -220,7 +220,7 @@ main(int argc, char **argv)
 				if (ret != NYX_ERROR_NONE)
 				{
 					SLEEPDLOG_CRITICAL(MSGID_NYX_DEVICE_OPEN_FAIL, 1,
-							PMLOGKS(CAUSE,"Unable to open the nyx device system"), "");
+					                   PMLOGKS(CAUSE, "Unable to open the nyx device system"), "");
 					abort();
 				}
 
@@ -236,7 +236,7 @@ main(int argc, char **argv)
 				 * request the current state of the charger from com.palm.power.
 				 */
 				LSCall(private_sh, "luna://com.palm.power/com/palm/power/chargerStatusQuery",
-				        "{}", ChargerStatus, NULL, NULL, &lserror);
+				       "{}", ChargerStatus, NULL, NULL, &lserror);
 
 				SLEEPDLOG_DEBUG("Sleepd daemon started");
 
@@ -246,9 +246,11 @@ main(int argc, char **argv)
 	}
 	else
 	{
-		SLEEPDLOG_CRITICAL(MSGID_SRVC_REGISTER_FAIL, 1, PMLOGKS(ERRTEXT,lserror.message), "Could not initialize sleepd");
+		SLEEPDLOG_CRITICAL(MSGID_SRVC_REGISTER_FAIL, 1, PMLOGKS(ERRTEXT,
+		                   lserror.message), "Could not initialize sleepd");
 		LSErrorFree(&lserror);
 	}
+
 	g_main_loop_unref(mainloop);
 	return 0;
 }

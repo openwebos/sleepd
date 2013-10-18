@@ -163,7 +163,8 @@ void MachineSleep(void)
 void
 MachineForceShutdown(const char *reason)
 {
-	SLEEPDLOG_INFO(MSGID_FRC_SHUTDOWN, 0,"Pwrevents shutting down system because of %s", reason);
+	SLEEPDLOG_INFO(MSGID_FRC_SHUTDOWN, 0,
+	               "Pwrevents shutting down system because of %s", reason);
 
 #ifdef REBOOT_TAKES_REASON
 
@@ -193,7 +194,8 @@ MachineForceShutdown(const char *reason)
 void
 MachineForceReboot(const char *reason)
 {
-	SLEEPDLOG_INFO(MSGID_FRC_REBOOT, 0,"Pwrevents rebooting system because of %s", reason);
+	SLEEPDLOG_INFO(MSGID_FRC_REBOOT, 0, "Pwrevents rebooting system because of %s",
+	               reason);
 
 #ifdef REBOOT_TAKES_REASON
 
@@ -310,7 +312,7 @@ bool ChargerStatus(LSHandle *sh,
 			                                  "USBConnected"));
 			dockconn = json_object_get_boolean(json_object_object_get(object, "DockPower"));
 			SLEEPDLOG_DEBUG("Charger connected/disconnected, usb : %s, dock : %s",
-			        usbconn ? "true" : "false", dockconn ? "true" : "false");
+			                usbconn ? "true" : "false", dockconn ? "true" : "false");
 			chargerIsConnected = usbconn | dockconn;
 		}
 	}

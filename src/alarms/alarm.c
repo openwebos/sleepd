@@ -171,7 +171,7 @@ alarmAdd(LSHandle *sh, LSMessage *message, void *ctx)
 		goto malformed_json;
 	}
 
-	SLEEPDLOG_DEBUG("%s",LSMessageGetPayload(message));
+	SLEEPDLOG_DEBUG("%s", LSMessageGetPayload(message));
 
 	serviceName = json_object_get_string(
 	                  json_object_object_get(object, "serviceName"));
@@ -188,15 +188,17 @@ alarmAdd(LSHandle *sh, LSMessage *message, void *ctx)
 		goto invalid_format;
 	}
 
-	if(!ConvertJsonTime(rel_time, &rel_hour, &rel_min, &rel_sec) ||
-	    (rel_hour < 0 || rel_hour > 24 || rel_min < 0 || rel_min > 59 ||rel_sec < 0 || rel_sec > 59))
+	if (!ConvertJsonTime(rel_time, &rel_hour, &rel_min, &rel_sec) ||
+	        (rel_hour < 0 || rel_hour > 24 || rel_min < 0 || rel_min > 59 || rel_sec < 0 ||
+	         rel_sec > 59))
 	{
 		goto invalid_format;
 	}
 
 	nyx_system_query_rtc_time(GetNyxSystemDevice(), &rtctime);
 
-	SLEEPDLOG_DEBUG("alarmAdd(): (%s %s %s) in %s (rtc %ld)",serviceName, applicationName, key, rel_time, rtctime);
+	SLEEPDLOG_DEBUG("alarmAdd(): (%s %s %s) in %s (rtc %ld)", serviceName,
+	                applicationName, key, rel_time, rtctime);
 	struct json_object *subscribe_json =
 	    json_object_object_get(object, "subscribe");
 
@@ -348,7 +350,7 @@ alarmAddCalendar(LSHandle *sh, LSMessage *message, void *ctx)
 		goto malformed_json;
 	}
 
-	SLEEPDLOG_DEBUG("alarmAddCalendar() : %s",LSMessageGetPayload(message));
+	SLEEPDLOG_DEBUG("alarmAddCalendar() : %s", LSMessageGetPayload(message));
 
 	serviceName = json_object_get_string(
 	                  json_object_object_get(object, "serviceName"));
@@ -371,13 +373,15 @@ alarmAddCalendar(LSHandle *sh, LSMessage *message, void *ctx)
 	int hour, min, sec;
 	int month, day, year;
 
-	if(!ConvertJsonTime(cal_time, &hour, &min, &sec))
+	if (!ConvertJsonTime(cal_time, &hour, &min, &sec))
 	{
 		goto invalid_format;
 	}
 
-	cal_date_str = g_strsplit(cal_date,"-",3);
-	if ((NULL == cal_date_str[0]) || (NULL == cal_date_str[1]) || (NULL == cal_date_str[2]))
+	cal_date_str = g_strsplit(cal_date, "-", 3);
+
+	if ((NULL == cal_date_str[0]) || (NULL == cal_date_str[1]) ||
+	        (NULL == cal_date_str[2]))
 	{
 		goto invalid_format;
 	}
@@ -394,7 +398,8 @@ alarmAddCalendar(LSHandle *sh, LSMessage *message, void *ctx)
 		goto invalid_format;
 	}
 
-	SLEEPDLOG_DEBUG("alarmAddCalendar() : (%s %s %s) at %s %s", serviceName, applicationName, key, cal_date, cal_time);
+	SLEEPDLOG_DEBUG("alarmAddCalendar() : (%s %s %s) at %s %s", serviceName,
+	                applicationName, key, cal_date, cal_time);
 
 	struct json_object *subscribe_json =
 	    json_object_object_get(object, "subscribe");
@@ -644,7 +649,7 @@ alarmRemove(LSHandle *sh, LSMessage *message, void *ctx)
 		goto malformed_json;
 	}
 
-	SLEEPDLOG_DEBUG("alarmRemove() : %s",LSMessageGetPayload(message));
+	SLEEPDLOG_DEBUG("alarmRemove() : %s", LSMessageGetPayload(message));
 
 	int alarmId =
 	    json_object_get_int(json_object_object_get(object, "alarmId"));
@@ -779,9 +784,9 @@ alarm_print(_Alarm *a)
 	asctime_r(&tm, buf);
 
 	SLEEPDLOG_DEBUG("(%s,%s) set alarm id %d @ %s",
-		  a->serviceName ? : "null",
-		  a->applicationName ? : "null",
-		  a->id, buf);
+	                a->serviceName ? : "null",
+	                a->applicationName ? : "null",
+	                a->id, buf);
 }
 
 static void
@@ -848,8 +853,8 @@ alarm_read_db(void)
 
 			if (!retVal)
 			{
-				SLEEPDLOG_WARNING(MSGID_ALARM_NOT_SET, 3, PMLOGKFV(ALARM_ID,"%d",alarmId),
-						  PMLOGKS(SRVC_NAME,service), PMLOGKS(APP_NAME,app), "could not add alarm");
+				SLEEPDLOG_WARNING(MSGID_ALARM_NOT_SET, 3, PMLOGKFV(ALARM_ID, "%d", alarmId),
+				                  PMLOGKS(SRVC_NAME, service), PMLOGKS(APP_NAME, app), "could not add alarm");
 			}
 
 clean_round:
@@ -1113,8 +1118,9 @@ fire_alarm(_Alarm *alarm)
 
 	nyx_system_query_rtc_time(GetNyxSystemDevice(), &rtctime);
 
-	SLEEPDLOG_DEBUG("fire_alarm() : Alarm (%s %s %s) fired at %s (rtc %ld)",alarm->serviceName,
-			alarm->applicationName, alarm->key, buf_alarm, rtctime);
+	SLEEPDLOG_DEBUG("fire_alarm() : Alarm (%s %s %s) fired at %s (rtc %ld)",
+	                alarm->serviceName,
+	                alarm->applicationName, alarm->key, buf_alarm, rtctime);
 
 	GString *payload = g_string_sized_new(255);
 	g_string_append_printf(payload, "{\"alarmId\":%d,\"fired\":true", alarm->id);

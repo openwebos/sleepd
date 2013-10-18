@@ -70,7 +70,8 @@ timesaver_save()
 
 		if (file < 0)
 		{
-			SLEEPDLOG_WARNING(MSGID_TIME_NOT_SAVED_TO_DB, 0, "Could not save time to \"%s\"", time_db_tmp);
+			SLEEPDLOG_WARNING(MSGID_TIME_NOT_SAVED_TO_DB, 0,
+			                  "Could not save time to \"%s\"", time_db_tmp);
 		}
 		else
 		{
@@ -108,23 +109,30 @@ bool ConvertJsonTime(const char *time, int *hour, int *minute, int *second)
 {
 	gchar **time_str;
 	int i = 0, j = 0, len;
-	time_str = g_strsplit(time,":",3);
-	if (!time_str) return false;
+	time_str = g_strsplit(time, ":", 3);
+
+	if (!time_str)
+	{
+		return false;
+	}
+
 	if ((NULL == time_str[0]) || (NULL == time_str[1]) || (NULL == time_str[2]))
 	{
 		g_strfreev(time_str);
 		return false;
 	}
-	for (i=0;i<3;i++)
+
+	for (i = 0; i < 3; i++)
 	{
 		char *timestr;
 		timestr = time_str[i];
 		len = strlen(time_str[i]);
-		for (j=0;j<len;j++)
+
+		for (j = 0; j < len; j++)
 		{
-			if(!isdigit(timestr[j]))
+			if (!isdigit(timestr[j]))
 			{
-				SLEEPDLOG_DEBUG("%s contains non-numeric values",time);
+				SLEEPDLOG_DEBUG("%s contains non-numeric values", time);
 				g_strfreev(time_str);
 				return false;
 			}

@@ -235,6 +235,7 @@ _activity_insert(const char *activity_id, int duration_ms)
 		g_queue_insert_sorted(activity_roster, activity,
 		                      (GCompareDataFunc)_activity_compare, NULL);
 	}
+
 	pthread_mutex_unlock(&activity_mutex);
 	return ret;
 }
@@ -448,8 +449,9 @@ _activity_print(struct timespec *from, struct timespec *now)
 
 		diff_ms = diff.tv_sec * 1000 + diff.tv_nsec / 1000000;
 
-		SLEEPDLOG_DEBUG("_activity_print() : (%s) for %d ms, expiry in %d ms", a->activity_id, a->duration_ms,
-				diff_ms);
+		SLEEPDLOG_DEBUG("_activity_print() : (%s) for %d ms, expiry in %d ms",
+		                a->activity_id, a->duration_ms,
+		                diff_ms);
 	}
 
 	pthread_mutex_unlock(&activity_mutex);
@@ -520,7 +522,8 @@ PwrEventActivityStart(const char *activity_id, int duration_ms)
 
 	retVal = _activity_start(activity_id, duration_ms);
 
-	SLEEPDLOG_DEBUG("PwrEventActivityStart() : (%s) for %dms => %s", activity_id, duration_ms, retVal ? "true" : "false");
+	SLEEPDLOG_DEBUG("PwrEventActivityStart() : (%s) for %dms => %s", activity_id,
+	                duration_ms, retVal ? "true" : "false");
 
 	if (retVal)
 	{
@@ -580,7 +583,7 @@ PwrEventActivityRemoveExpired(struct timespec *now)
 				LSErrorInit(&lserror);
 
 				SLEEPDLOG_DEBUG("Long activity %s of duration %d ms expired... sending RDX report.",
-					a->activity_id, a->duration_ms);
+				                a->activity_id, a->duration_ms);
 			}
 
 			_activity_stop_activity(a);

@@ -316,7 +316,7 @@ IdleCheck(gpointer ctx)
 
 			if (PwrEventActivityCount(&sTimeOnWake))
 			{
-				SLEEPDLOG_DEBUG( "Activities since wake: ");
+				SLEEPDLOG_DEBUG("Activities since wake: ");
 				PwrEventActivityPrintFrom(&sTimeOnWake);
 			}
 
@@ -335,7 +335,8 @@ IdleCheck(gpointer ctx)
 
 					if (next_wake >= 0 && next_wake <= gSleepConfig.wait_alarms_s)
 					{
-						SLEEPDLOG_DEBUG("Not going to sleep because an alarm is about to fire in %d sec\n", next_wake);
+						SLEEPDLOG_DEBUG("Not going to sleep because an alarm is about to fire in %d sec\n",
+						                next_wake);
 						goto resched;
 					}
 				}
@@ -518,7 +519,8 @@ StateSuspendRequest(void)
 	SendSuspendRequest("");
 
 	// send msg to ask for permission to sleep
-	SLEEPDLOG_DEBUG("Sent \"suspend request\", waiting up to %dms", gSleepConfig.wait_suspend_response_ms);
+	SLEEPDLOG_DEBUG("Sent \"suspend request\", waiting up to %dms",
+	                gSleepConfig.wait_suspend_response_ms);
 
 	if (!PwrEventClientsApproveSuspendRequest())
 	{
@@ -534,7 +536,8 @@ StateSuspendRequest(void)
 	if (timeout)
 	{
 		gchar *silent_clients = PwrEventGetSuspendRequestNORSPList();
-		SLEEPDLOG_DEBUG("We timed-out waiting for daemons (%s) to acknowledge SuspendRequest.",silent_clients);
+		SLEEPDLOG_DEBUG("We timed-out waiting for daemons (%s) to acknowledge SuspendRequest.",
+		                silent_clients);
 		g_free(silent_clients);
 		ret = kPowerStatePrepareSuspend;
 	}
@@ -555,7 +558,8 @@ StateSuspendRequest(void)
 
 		if (successive_ons >= log_count)
 		{
-			SLEEPDLOG_DEBUG("%d successive votes to NACK SuspendRequest since previous suspend", successive_ons);
+			SLEEPDLOG_DEBUG("%d successive votes to NACK SuspendRequest since previous suspend",
+			                successive_ons);
 			PwrEventClientTablePrint(G_LOG_LEVEL_WARNING);
 
 			if (log_count >= MAX_LOG_COUNT_INCREASE_RATE)
@@ -601,7 +605,7 @@ StatePrepareSuspend(void)
 	SendPrepareSuspend("");
 
 	PMLOG_TRACE("Sent \"prepare suspend\", waiting up to %dms",
-	      gSleepConfig.wait_prepare_suspend_ms);
+	            gSleepConfig.wait_prepare_suspend_ms);
 
 	if (!PwrEventClientsApprovePrepareSuspend())
 	{
@@ -617,10 +621,12 @@ StatePrepareSuspend(void)
 	if (timeout)
 	{
 		gchar *silent_clients = PwrEventGetPrepareSuspendNORSPList();
-		SLEEPDLOG_DEBUG("We timed-out waiting for daemons (%s) to acknowledge PrepareSuspend.", silent_clients);
+		SLEEPDLOG_DEBUG("We timed-out waiting for daemons (%s) to acknowledge PrepareSuspend.",
+		                silent_clients);
 		gchar *clients = PwrEventGetClientTable();
 
-		SLEEPDLOG_DEBUG("== NORSP clients ==\n %s\n == client table ==\n %s",silent_clients, clients);
+		SLEEPDLOG_DEBUG("== NORSP clients ==\n %s\n == client table ==\n %s",
+		                silent_clients, clients);
 		g_free(clients);
 		g_free(silent_clients);
 
@@ -645,7 +651,8 @@ StatePrepareSuspend(void)
 
 		if (successive_ons >= log_count)
 		{
-			SLEEPDLOG_DEBUG("%d successive votes to NACK PrepareSuspend since previous suspend",successive_ons);
+			SLEEPDLOG_DEBUG("%d successive votes to NACK PrepareSuspend since previous suspend",
+			                successive_ons);
 			PwrEventClientTablePrint(G_LOG_LEVEL_WARNING);
 
 			if (log_count >= MAX_LOG_COUNT_INCREASE_RATE)
@@ -761,7 +768,7 @@ StateSleep(void)
 
 		if (timeout_get_next_wakeup(&expiry, &app_id, &key))
 		{
-			SLEEPDLOG_DEBUG("waking in %ld seconds for %s",expiry - rtc_wall_time(), key);
+			SLEEPDLOG_DEBUG("waking in %ld seconds for %s", expiry - rtc_wall_time(), key);
 		}
 
 		g_free(app_id);
@@ -912,7 +919,8 @@ SuspendInit(void)
 
 	if (pthread_create(&suspend_tid, NULL, SuspendThread, NULL))
 	{
-		SLEEPDLOG_CRITICAL(MSGID_PTHREAD_CREATE_FAIL, 0, "Could not create SuspendThread\n");
+		SLEEPDLOG_CRITICAL(MSGID_PTHREAD_CREATE_FAIL, 0,
+		                   "Could not create SuspendThread\n");
 		abort();
 	}
 
@@ -920,7 +928,8 @@ SuspendInit(void)
 
 	if (ret != NYX_ERROR_NONE)
 	{
-		SLEEPDLOG_ERROR(MSGID_NYX_DEV_OPEN_FAIL, 0, "Unable to open the nyx device led controller");
+		SLEEPDLOG_ERROR(MSGID_NYX_DEV_OPEN_FAIL, 0,
+		                "Unable to open the nyx device led controller");
 	}
 
 	return 0;

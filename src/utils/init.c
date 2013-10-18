@@ -80,7 +80,8 @@ NamedInitFuncAdd(const char *name, InitFuncPriority priority, InitFunc func,
 
 		if (!namedInitFuncs)
 		{
-			SLEEPDLOG_ERROR(MSGID_NAMED_INIT_FUNC_OOM, 0, "Out of memory on initialization");
+			SLEEPDLOG_ERROR(MSGID_NAMED_INIT_FUNC_OOM, 0,
+			                "Out of memory on initialization");
 			abort();
 		}
 	}
@@ -91,7 +92,8 @@ NamedInitFuncAdd(const char *name, InitFuncPriority priority, InitFunc func,
 
 		if (!namedHookList)
 		{
-			SLEEPDLOG_ERROR(MSGID_NAMED_HOOK_LIST_OOM, 0, "Out of memory on initialization");
+			SLEEPDLOG_ERROR(MSGID_NAMED_HOOK_LIST_OOM, 0,
+			                "Out of memory on initialization");
 			abort();
 		}
 

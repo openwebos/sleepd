@@ -512,7 +512,7 @@ suspendRequestRegister(LSHandle *sh, LSMessage *message, void *data)
 
 	reg = json_object_get_boolean(json_reg);
 
-    SLEEPDLOG_DEBUG("RequestRegister - PwrEvent received from %s", clientId );
+	SLEEPDLOG_DEBUG("RequestRegister - PwrEvent received from %s", clientId);
 
 	PwrEventClientSuspendRequestRegister(clientId, reg);
 
@@ -810,7 +810,8 @@ SuspendIPCInit(void)
 
 	if (!retVal)
 	{
-		SLEEPDLOG_WARNING(MSGID_LS_SUBSCRIB_SETFUN_FAIL, 0, "Error in setting cancel function");
+		SLEEPDLOG_WARNING(MSGID_LS_SUBSCRIB_SETFUN_FAIL, 0,
+		                  "Error in setting cancel function");
 		goto ls_error;
 	}
 

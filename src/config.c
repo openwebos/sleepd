@@ -154,7 +154,8 @@ config_init(void)
 	}
 	else
 	{
-		SLEEPDLOG_WARNING(MSGID_CONFIG_FILE_LOAD_ERR, 1, PMLOGKS(PATH,config_path), "cannot load config file");
+		SLEEPDLOG_WARNING(MSGID_CONFIG_FILE_LOAD_ERR, 1, PMLOGKS(PATH, config_path),
+		                  "cannot load config file");
 	}
 
 	g_free(config_path);

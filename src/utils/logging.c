@@ -26,17 +26,19 @@ _good_assert(const char *cond_str, bool cond)
 {
 	if (G_UNLIKELY(!(cond)))
 	{
-		SLEEPDLOG_CRITICAL(MSGID_ASSERTION_FAIL, 1, PMLOGKS(CAUSE,cond_str), "");
+		SLEEPDLOG_CRITICAL(MSGID_ASSERTION_FAIL, 1, PMLOGKS(CAUSE, cond_str), "");
 		*(int *)0x00 = 0;
 	}
 }
 
 PmLogContext getsleepdcontext()
 {
-    static PmLogContext logContext = 0;
-    if (0 == logContext)
-    {
-        PmLogGetContext("sleepd", &logContext);
-    }
-    return logContext;
+	static PmLogContext logContext = 0;
+
+	if (0 == logContext)
+	{
+		PmLogGetContext("sleepd", &logContext);
+	}
+
+	return logContext;
 }

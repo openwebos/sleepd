@@ -121,7 +121,7 @@ void read_lvdisplay(char **buf)
 
 	//  g_message("%s: i is: %d",__func__,i);
 
-        pclose(stream);
+	pclose(stream);
 
 }
 
@@ -140,7 +140,8 @@ void read_proc_loadavg()
 	{
 		if (gerror)
 		{
-			SLEEPDLOG_WARNING(MSGID_READ_PROC_LOADAVG_ERR, 1 , PMLOGKS(ERRTEXT,gerror->message), "");
+			SLEEPDLOG_WARNING(MSGID_READ_PROC_LOADAVG_ERR, 1 , PMLOGKS(ERRTEXT,
+			                  gerror->message), "");
 			g_error_free(gerror);
 		}
 	}
@@ -148,7 +149,7 @@ void read_proc_loadavg()
 	arr_file = g_strsplit_set(contents, " ", -1);
 
 	SLEEPDLOG_DEBUG("loadavg:1m:%s:5m:%s:15m:%s kr/ke:%s pid:%s", arr_file[0],
-	   arr_file[1], arr_file[2], arr_file[3], arr_file[4]);
+	                arr_file[1], arr_file[2], arr_file[3], arr_file[4]);
 
 	g_strfreev(arr_file);
 	g_free(contents);
@@ -172,7 +173,8 @@ void read_proc_diskstats()
 	{
 		if (gerror)
 		{
-			SLEEPDLOG_WARNING(MSGID_READ_PROC_DISKSTAT_ERR, 1 , PMLOGKS(ERRTEXT,gerror->message), "");
+			SLEEPDLOG_WARNING(MSGID_READ_PROC_DISKSTAT_ERR, 1 , PMLOGKS(ERRTEXT,
+			                  gerror->message), "");
 			g_error_free(gerror);
 		}
 	}
@@ -295,7 +297,8 @@ void read_proc_stat()
 	{
 		if (gerror)
 		{
-			SLEEPDLOG_WARNING(MSGID_READ_PROC_STAT_ERR, 1, PMLOGKS(ERRTEXT,gerror->message), "");
+			SLEEPDLOG_WARNING(MSGID_READ_PROC_STAT_ERR, 1, PMLOGKS(ERRTEXT,
+			                  gerror->message), "");
 			g_error_free(gerror);
 		}
 	}
@@ -326,18 +329,18 @@ void read_proc_stat()
 
 	arr_line = g_strsplit(arr_file[0], " ", -1); // cpu0
 	SLEEPDLOG_DEBUG("%s_stat: u:%s ulp:%s sys:%s i:%s iow:%s int:%s sint:%s cs:%s pr:%s",
-	          //path,
-	          arr_line[0],
-	          arr_line[2], // arr_line[1] is an empty string
-	          arr_line[3],
-	          arr_line[4],
-	          arr_line[5],
-	          arr_line[6],
-	          arr_line[7],
-	          arr_line[8],
-	          ctxt,
-	          procs_running
-	         );
+	                //path,
+	                arr_line[0],
+	                arr_line[2], // arr_line[1] is an empty string
+	                arr_line[3],
+	                arr_line[4],
+	                arr_line[5],
+	                arr_line[6],
+	                arr_line[7],
+	                arr_line[8],
+	                ctxt,
+	                procs_running
+	               );
 	g_strfreev(arr_line);
 
 	g_free(ctxt);
@@ -366,7 +369,8 @@ void read_proc_meminfo()
 	{
 		if (gerror)
 		{
-			SLEEPDLOG_WARNING(MSGID_READ_PROC_MEMINFO_ERR, 1 , PMLOGKS(ERRTEXT,gerror->message), "");
+			SLEEPDLOG_WARNING(MSGID_READ_PROC_MEMINFO_ERR, 1 , PMLOGKS(ERRTEXT,
+			                  gerror->message), "");
 			g_error_free(gerror);
 		}
 	}
@@ -409,7 +413,7 @@ void read_proc_meminfo()
 	}
 
 	SLEEPDLOG_DEBUG("mem:mt:%s mf:%s st:%s sf:%s", g_strstrip(MemTotal),
-	          g_strstrip(MemFree), g_strstrip(SwapTotal), g_strstrip(SwapFree));
+	                g_strstrip(MemFree), g_strstrip(SwapTotal), g_strstrip(SwapFree));
 
 	g_free(MemTotal);
 	g_free(MemFree);
@@ -437,7 +441,8 @@ void read_proc_net_dev()
 	{
 		if (gerror)
 		{
-			SLEEPDLOG_WARNING(MSGID_READ_PROC_NETDEV_ERR, 1, PMLOGKS(ERRTEXT,gerror->message), "");
+			SLEEPDLOG_WARNING(MSGID_READ_PROC_NETDEV_ERR, 1, PMLOGKS(ERRTEXT,
+			                  gerror->message), "");
 			g_error_free(gerror);
 		}
 	}
@@ -483,11 +488,11 @@ void read_proc_net_dev()
 			}
 
 			SLEEPDLOG_DEBUG("net:%s:rp:%s tp:%s",
-			          //path,
-			          arr_line[0],
-			          arr_fields[received_packets], // hack, values seem to start from arr_line[2]
-			          arr_fields[transmitted_packets]
-			         );
+			                //path,
+			                arr_line[0],
+			                arr_fields[received_packets], // hack, values seem to start from arr_line[2]
+			                arr_fields[transmitted_packets]
+			               );
 			g_strfreev(arr_fields);
 		}
 
@@ -526,12 +531,12 @@ sawmill_logger_update(gpointer data)
 		long unsigned int diff_awake = sTimeOnPrint - sTimeOnWake;
 
 		SLEEPDLOG_DEBUG("Logger Update : raw_coulomb: %f coulomb: %f time_awake_ms: %lu time_asleep_ms: %lu time_screen_on_ms: %lu time_screen_off_ms: %lu",
-		          rc, c,
-		          sTotalMSAwake + diff_awake,
-		          sTotalMSAsleep,
-		          sTotalMSScreenOn + (sScreenIsOn ? (time_now_ms() - sTimeScreenOn) : 0),
-		          sTotalMSScreenOff + (sScreenIsOn ? 0 : (time_now_ms() - sTimeScreenOff))
-		         );
+		                rc, c,
+		                sTotalMSAwake + diff_awake,
+		                sTotalMSAsleep,
+		                sTotalMSScreenOn + (sScreenIsOn ? (time_now_ms() - sTimeScreenOn) : 0),
+		                sTotalMSScreenOff + (sScreenIsOn ? 0 : (time_now_ms() - sTimeScreenOff))
+		               );
 		read_proc_loadavg();
 		read_proc_stat();
 		read_proc_diskstats();

@@ -376,8 +376,8 @@ static void
 client_vote_print(const char *key, ShutdownClient *client, void *data)
 {
 	SLEEPDLOG_DEBUG("%s %s %s @ %fs", client->id, client->name,
-	          shutdown_reply_to_string(client->ack_shutdown),
-	          client->elapsed);
+	                shutdown_reply_to_string(client->ack_shutdown),
+	                client->elapsed);
 }
 
 /**
@@ -389,7 +389,7 @@ client_list_print(GHashTable *client_table)
 {
 	int size = g_hash_table_size(client_table);
 
-	SLEEPDLOG_DEBUG( "clients:");
+	SLEEPDLOG_DEBUG("clients:");
 
 	if (size > 0)
 	{
@@ -457,8 +457,9 @@ shutdown_state_dispatch(ShutdownEvent *event)
 		_assert(next_state >= gCurrentState->state);
 
 		if (next_state != gCurrentState->state)
-		{    
-			SLEEPDLOG_DEBUG("Shutdown: entering state: %s @ %fs",kStateMachine[next_state].name,g_timer_elapsed(shutdown_timer, NULL));
+		{
+			SLEEPDLOG_DEBUG("Shutdown: entering state: %s @ %fs",
+			                kStateMachine[next_state].name, g_timer_elapsed(shutdown_timer, NULL));
 		}
 
 		gCurrentState = &kStateMachine[next_state];
@@ -481,7 +482,8 @@ send_shutdown_apps()
 
 	if (!retVal)
 	{
-		SLEEPDLOG_ERROR(MSGID_SHUTDOWN_APPS_SIG_FAIL, 0, "Could not send shutdown applications");
+		SLEEPDLOG_ERROR(MSGID_SHUTDOWN_APPS_SIG_FAIL, 0,
+		                "Could not send shutdown applications");
 		LSErrorPrint(&lserror, stderr);
 		LSErrorFree(&lserror);
 	}
@@ -504,7 +506,8 @@ send_shutdown_services()
 
 	if (!retVal)
 	{
-		SLEEPDLOG_ERROR(MSGID_SHUTDOWN_SRVC_SIG_FAIL, 0, "Could not send shutdown Services");
+		SLEEPDLOG_ERROR(MSGID_SHUTDOWN_SRVC_SIG_FAIL, 0,
+		                "Could not send shutdown Services");
 		LSErrorPrint(&lserror, stderr);
 		LSErrorFree(&lserror);
 	}
@@ -762,7 +765,8 @@ state_shutdown_action(ShutdownEvent *event, ShutdownState *next)
 
 	if (!retVal)
 	{
-		SLEEPDLOG_WARNING(MSGID_SHUTDOWN_REPLY_FAIL, 0, "Could not send shutdown success message");
+		SLEEPDLOG_WARNING(MSGID_SHUTDOWN_REPLY_FAIL, 0,
+		                  "Could not send shutdown success message");
 	}
 
 	if (shutdown_message)
@@ -796,7 +800,8 @@ send_reply(LSHandle *sh, LSMessage *message,
 
 	if (!retVal)
 	{
-		SLEEPDLOG_WARNING(MSGID_LSMSG_REPLY_FAIL, 0, "Could not send reply with payload : %s", payload);
+		SLEEPDLOG_WARNING(MSGID_LSMSG_REPLY_FAIL, 0,
+		                  "Could not send reply with payload : %s", payload);
 	}
 
 	g_free(payload);
@@ -980,7 +985,8 @@ shutdownApplicationsRegister(LSHandle *sh, LSMessage *message,
 
 	if (!retVal)
 	{
-		SLEEPDLOG_WARNING(MSGID_LSSUBSCRI_ADD_FAIL, 0,"LSSubscriptionAdd failed for applications");
+		SLEEPDLOG_WARNING(MSGID_LSSUBSCRI_ADD_FAIL, 0,
+		                  "LSSubscriptionAdd failed for applications");
 		LSErrorPrint(&lserror, stderr);
 		LSErrorFree(&lserror);
 	}
@@ -1029,7 +1035,8 @@ shutdownServicesRegister(LSHandle *sh, LSMessage *message,
 
 	if (!retVal)
 	{
-		SLEEPDLOG_WARNING(MSGID_LSSUBSCRI_ADD_FAIL, 0,"LSSubscriptionAdd failed for services");
+		SLEEPDLOG_WARNING(MSGID_LSSUBSCRI_ADD_FAIL, 0,
+		                  "LSSubscriptionAdd failed for services");
 		LSErrorPrint(&lserror, stderr);
 		LSErrorFree(&lserror);
 	}
