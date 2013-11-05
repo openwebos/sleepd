@@ -791,6 +791,7 @@ send_reply(LSHandle *sh, LSMessage *message,
 	bool retVal;
 	char *payload;
 	va_list vargs;
+    gchar* payloadStr = NULL;
 
 	va_start(vargs, format);
 	payload = g_strdup_vprintf(format, vargs);
@@ -800,8 +801,10 @@ send_reply(LSHandle *sh, LSMessage *message,
 
 	if (!retVal)
 	{
-		SLEEPDLOG_WARNING(MSGID_LSMSG_REPLY_FAIL, 0,
-		                  "Could not send reply with payload : %s", payload);
+		payloadStr = g_strescape(payload,NULL);
+		SLEEPDLOG_WARNING(MSGID_LSMSG_REPLY_FAIL, 1,PMLOGKS("payload",payloadStr),
+		                  "Could not send reply");
+		g_free(payloadStr);
 	}
 
 	g_free(payload);

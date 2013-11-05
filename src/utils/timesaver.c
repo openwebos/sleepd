@@ -70,8 +70,7 @@ timesaver_save()
 
 		if (file < 0)
 		{
-			SLEEPDLOG_WARNING(MSGID_TIME_NOT_SAVED_TO_DB, 0,
-			                  "Could not save time to \"%s\"", time_db_tmp);
+			SLEEPDLOG_WARNING(MSGID_TIME_NOT_SAVED, 1, PMLOGKS("FileName",time_db_tmp), "Could not save time");
 		}
 		else
 		{

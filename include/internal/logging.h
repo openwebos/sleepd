@@ -28,7 +28,7 @@
  * kvcount - count for key-value pairs
  * ... - key-value pairs and free text. key-value pairs are formed using PMLOGKS or PMLOGKFV
  * e.g.)
- * LOG_CRITICAL(msgid, 2, PMLOGKS("key1", "value1"), PMLOGKFV("key2", "%s", value2), "free text message");
+ * LOG_CRITICAL(msgid, 2, PMLOGKS("key1", "value1"), PMLOGKFV("key2", "%d", value2), "free text message");
  **********************************************/
 #define SLEEPDLOG_CRITICAL(msgid, kvcount, ...) \
         PmLogCritical(getsleepdcontext(), msgid, kvcount, ##__VA_ARGS__)
@@ -71,7 +71,6 @@
 /** timeout_alarm.c */
 #define MSGID_RTC_ERR                             "RTC_ERR"                        //RTC not working properly
 #define MSGID_SELECT_EXPIRY_ERR                   "SELECT_EXPIRY_ERR"              //Failed to select expiry from timeout db
-#define MSGID_RTC_ERR                             "RTC_ERR"                        //RTC not working properly
 #define MSGID_TIMEOUT_MSG_ERR                     "TIMEOUT_MSG_ERR"                //could not send timeout message
 #define MSGID_SQLITE_STEP_FAIL                    "SQLITE_STEP_FAIL"               //sqlite3 step error
 #define MSGID_SQLITE_FINALIZE_FAIL                "SQLITE_FINALIZE_FAIL"           //sqlite3 finalize error
@@ -100,7 +99,7 @@
 #define MSGID_NAMED_HOOK_LIST_OOM                 "NAMED_HOOK_LIST_OOM"            //Out of memory on initialization
 
 /** timesaver.c */
-#define MSGID_TIME_NOT_SAVED_TO_DB                "TIME_NOT_SAVED_TO_DB"           //time not be saved to db before battery was pulledout
+#define MSGID_TIME_NOT_SAVED                      "TIME_NOT_SAVED"                //time not be saved to temp file before battery was pulledout
 
 /** activity.c */
 

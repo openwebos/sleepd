@@ -952,9 +952,9 @@ _rtc_check(gpointer data)
 	if (this_time == sLastRTCTime)
 	{
 		sNumTimes++;
-		SLEEPDLOG_WARNING(MSGID_RTC_ERR, 1, PMLOGKFV(NYX_QUERY_TIME, "%ld", this_time),
-		                  "RTC appears not to be ticking, number of times showing same RTC time : %ld",
-		                  sNumTimes);
+		SLEEPDLOG_WARNING(MSGID_RTC_ERR, 2, PMLOGKFV(NYX_QUERY_TIME, "%ld", this_time),
+			              PMLOGKFV("RTC_TIME","%ld",sNumTimes),
+		                  "RTC appears not to be ticking,showing same RTC time");
 	}
 	else
 	{
@@ -1511,8 +1511,7 @@ _alarms_timeout_init(void)
 
 	if (!retVal)
 	{
-		SLEEPDLOG_ERROR(MSGID_DB_OPEN_ERR, 0, "Failed to open database %s",
-		                timeout_db_name);
+		SLEEPDLOG_ERROR(MSGID_DB_OPEN_ERR, 1, PMLOGKS("DBName",timeout_db_name),"Failed to open database");
 		goto error;
 	}
 

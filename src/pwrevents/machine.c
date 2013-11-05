@@ -163,8 +163,8 @@ void MachineSleep(void)
 void
 MachineForceShutdown(const char *reason)
 {
-	SLEEPDLOG_INFO(MSGID_FRC_SHUTDOWN, 0,
-	               "Pwrevents shutting down system because of %s", reason);
+	SLEEPDLOG_INFO(MSGID_FRC_SHUTDOWN, 1, PMLOGKS("Reason",reason),
+	               "Pwrevents shutting down system");
 
 #ifdef REBOOT_TAKES_REASON
 
@@ -194,8 +194,7 @@ MachineForceShutdown(const char *reason)
 void
 MachineForceReboot(const char *reason)
 {
-	SLEEPDLOG_INFO(MSGID_FRC_REBOOT, 0, "Pwrevents rebooting system because of %s",
-	               reason);
+	SLEEPDLOG_INFO(MSGID_FRC_REBOOT, 1,PMLOGKS("Reason",reason), "Pwrevents rebooting system");
 
 #ifdef REBOOT_TAKES_REASON
 
