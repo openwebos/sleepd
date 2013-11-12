@@ -74,6 +74,7 @@ include_directories(${POWERD_INCLUDE_DIRS})
 webos_add_compiler_flags(ALL ${POWERD_CFLAGS_OTHER})
 
 webos_add_compiler_flags(ALL -Wall)
+webos_add_compiler_flags(ALL -Werror=implicit-function-declaration)
 
 # Allow developer to compile with -Werror, without potentially breaking a build
 set(WEBOS_USE_WERROR FALSE CACHE BOOL "Set to TRUE to enable -Werror")

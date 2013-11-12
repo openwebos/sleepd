@@ -40,6 +40,7 @@
 #include "lunaservice_utils.h"
 
 #include "timersource.h"
+#include "reference_time.h"
 
 #include "timeout_alarm.h"
 #include "config.h"
@@ -133,89 +134,6 @@ CREATE INDEX IF NOT EXISTS expiry_index on AlarmTimeout (expiry);";
  * @addtogroup NewInterface
  * @{
  */
-
-
-static time_t rtc_to_wall = 0;
-/**
-* @brief Convert to rtc time.
-*
-* @param  t
-*
-* @retval
-*/
-static time_t to_rtc(time_t t)
-{
-	return t - rtc_to_wall;
-}
-
-/**
-* @brief Last wall time.
-*
-* @retval
-*/
-time_t rtc_wall_time(void)
-{
-	time_t rtctime = 0;
-	nyx_system_query_rtc_time(GetNyxSystemDevice(), &rtctime);
-	return rtctime + rtc_to_wall;
-}
-
-/**
-* @brief Calculate the time difference between RTC time and wall time
-*/
-
-bool
-wall_rtc_diff(time_t *ret_delta)
-{
-	time_t rtc_time_now = 0;
-	time_t wall_time_now = 0;
-
-	nyx_system_query_rtc_time(GetNyxSystemDevice(), &rtc_time_now);
-
-	time(&wall_time_now);
-
-	/* Calculate the time difference */
-	time_t delta = wall_time_now - rtc_time_now;
-
-	if (ret_delta)
-	{
-		*ret_delta = delta;
-	}
-
-	return true;
-}
-
-/**
-* @brief Update the rtc and return the difference rtc changed by.
-*
-* @retval
-*/
-static time_t update_rtc(time_t *ret_delta)
-{
-	bool retVal;
-	time_t new_delta = 0;
-	time_t delta = 0;
-
-	retVal = wall_rtc_diff(&new_delta);
-
-	if (!retVal)
-	{
-		return false;
-	}
-
-	if (new_delta != rtc_to_wall)
-	{
-		delta = new_delta - rtc_to_wall;
-		rtc_to_wall = new_delta;
-	}
-
-	if (ret_delta)
-	{
-		*ret_delta = delta;
-	}
-
-	return true;
-}
 
 static void
 _print_timeout(const char *message, const char *app_id, const char *key,
@@ -1568,10 +1486,6 @@ _alarms_timeout_init(void)
 	if (!retVal)
 	{
 		SLEEPDLOG_ERROR(MSGID_UPDATE_RTC_FAIL, 0, "could not get wall-rtc offset");
-	}
-	else
-	{
-		SLEEPDLOG_DEBUG("Initial WALL-RTC = %ld", rtc_to_wall);
 	}
 
 	GTimerSource *timer_rtc_check = g_timer_source_new_seconds(5 * 60);
