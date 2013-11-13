@@ -432,7 +432,7 @@ PwrEventGetPrepareSuspendNORSPList()
 void
 PwrEventClientTablePrintHelper(gpointer key, gpointer value, gpointer data)
 {
-	GLogLevelFlags lvl = GPOINTER_TO_UINT(data);
+	/* GLogLevelFlags lvl = GPOINTER_TO_UINT(data); */
 	struct PwrEventClientInfo *info =
 	    (struct PwrEventClientInfo *)value;
 

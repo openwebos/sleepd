@@ -75,6 +75,20 @@ webos_add_compiler_flags(ALL ${POWERD_CFLAGS_OTHER})
 
 webos_add_compiler_flags(ALL -Wall)
 
+# Allow developer to compile with -Werror, without potentially breaking a build
+set(WEBOS_USE_WERROR FALSE CACHE BOOL "Set to TRUE to enable -Werror")
+if(WEBOS_USE_WERROR)
+    # treat most warnings as errors
+	webos_add_compiler_flags(ALL
+	                         -Werror
+	                         -Wno-error=format
+	                         -Wno-error=deprecated-declarations
+	                         -Wno-error=unused-function)
+endif()
+
+# we use gmtime_r which is not part of C99
+webos_add_compiler_flags(ALL --std=gnu99)
+
 webos_add_linker_options(ALL --no-undefined)
 
 add_definitions(-DPMLOG_TRACES_ENABLED -DPMLOG_TRACE_COMPONENT="sleepd")
@@ -101,6 +115,7 @@ target_link_libraries(sleepd
 
 webos_build_daemon()
 webos_build_system_bus_files()
+webos_config_build_doxygen(doc Doxyfile)
 
 install(PROGRAMS scripts/public/suspend_action DESTINATION ${WEBOS_INSTALL_SBINDIR})
 install(FILES files/conf/sleepd.conf DESTINATION ${WEBOS_INSTALL_DEFAULTCONFDIR})

@@ -943,7 +943,7 @@ TriggerSuspend(const char *reason, PowerEvent event)
 {
 	GSource *source = g_idle_source_new();
 	g_source_set_callback(source,
-	                      (GSourceFunc)SuspendStateUpdate, (void *)event, NULL);
+	                      (GSourceFunc)SuspendStateUpdate, GINT_TO_POINTER(event), NULL);
 	g_source_attach(source, g_main_loop_get_context(suspend_loop));
 
 	g_source_unref(source);
