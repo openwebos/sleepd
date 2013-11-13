@@ -92,6 +92,14 @@ webos_add_compiler_flags(ALL --std=gnu99)
 
 webos_add_linker_options(ALL --no-undefined)
 
+if(UNMANAGED_SUSPEND)
+    add_definitions(-DENABLE_UNMANAGED_SUSPEND)
+endif()
+
+if(DEFINED RTC_WATCHDOG AND NOT RTC_WATCHDOG)
+    add_definitions(-DWITHOUT_RTC_WATCHDOG)
+endif()
+
 add_definitions(-DPMLOG_TRACES_ENABLED -DPMLOG_TRACE_COMPONENT="sleepd")
 
 # Build the sleepd executable

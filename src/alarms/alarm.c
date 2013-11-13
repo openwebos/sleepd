@@ -42,6 +42,7 @@
 #include "logging.h"
 #include "config.h"
 #include "timeout_alarm.h"
+#include "reference_time.h"
 #include "timesaver.h"
 
 #define LOG_DOMAIN "ALARM: "
@@ -205,7 +206,7 @@ alarmAdd(LSHandle *sh, LSMessage *message, void *ctx)
 	subscribe = json_object_get_boolean(subscribe_json);
 
 
-	alarm_time = rtc_wall_time();
+	alarm_time = reference_time();
 	alarm_time += rel_sec;
 	alarm_time += rel_min * 60;
 	alarm_time += rel_hour * 60 * 60;
@@ -1180,7 +1181,7 @@ notify_alarms(void)
 	time_t now;
 	bool fired = false;
 
-	now = rtc_wall_time();
+	now = reference_time();
 
 	GSequenceIter *iter = g_sequence_get_begin_iter(gAlarmQueue->alarms);
 

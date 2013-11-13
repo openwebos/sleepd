@@ -53,8 +53,6 @@ typedef struct _AlarmTimeoutNonConst
 	time_t      expiry;
 } _AlarmTimeoutNonConst;
 
-time_t rtc_wall_time(void);
-
 void _timeout_create(_AlarmTimeout *timeout,
                      const char *app_id, const char *key,
                      const char *uri, const char *params,
@@ -72,7 +70,15 @@ bool _timeout_clear(const char *app_id, const char *key, bool public_bus);
 
 bool _timeout_delete(const char *app_id, const char *key, bool public_bus);
 
-void _queue_next_timeout(bool set_callback_fn);
+/**
+ * Request RTC alarm for next wakeup timeout.
+ *
+ * Should be called before system suspend.
+ *
+ * @retval false if failed to setup RTC wakeup while there is scheduled events
+ *         waits their time.
+ */
+bool queue_next_wakeup();
 
 bool timeout_get_next_wakeup(time_t *expiry, gchar **app_id, gchar **key);
 

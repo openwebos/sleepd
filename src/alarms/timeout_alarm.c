@@ -25,6 +25,7 @@
 */
 
 
+#include <time.h>
 #include <glib.h>
 #include <stdlib.h>
 #include <string.h>
@@ -83,6 +84,7 @@ typedef enum
 static LSPalmService *psh = NULL;
 static sqlite3 *timeout_db = NULL;
 static GTimerSource *sTimerCheck = NULL;
+static time_t invalid_time = (time_t)-1;
 
 /*
    Database Schema.
@@ -384,7 +386,7 @@ _expire_timeouts(void)
 	int base;
 	_AlarmTimeout timeout;
 
-	now = rtc_wall_time();
+	now = reference_time();
 
 	/* Find all expired calendar timeouts */
 	char *sqlquery = g_strdup_printf(
@@ -494,36 +496,29 @@ timeout_get_next_wakeup(time_t *expiry, gchar **app_id, gchar **key)
 	return ret;
 }
 
-
 /**
-* @brief Queues both a RTC alarm for wakeup timeouts
-*        and a timer for non-wakeup timeouts.
-*
-* @param set_callback_fn
-*  If set_callback_fn is set to true, the callback function _rtc_alarm_fired
-*  will be triggered as soon as the alarm is fired.
-*  It will be set to true as long as device is awake, and will be set to false when
-*  the device suspends.
-*
-* The non-wakeup timeout timer is necessary so that
-* these timeouts do not wake the device when they fire.
-* Case 1: non-wakeup timeout expires when device is awake (trivial).
-* Case 2: non-wakeup timeout expires when device is asleep.
-*     On resume, we will check to see if any alarms are expired and fire them.
-*/
-void
-_queue_next_timeout(bool set_callback_fn)
+ * @brief Queues a RTC alarm for wakeup timeouts
+ *
+ * Should be called before suspending
+ *
+ * @param set_callback_fn
+ *  If set_callback_fn is set to true, the callback function _rtc_alarm_fired
+ *  will be triggered as soon as the alarm is fired.
+ *  It will be set to true as long as device is awake, and will be set to false when
+ *  the device suspends.
+ *
+ * @retval false if any failure met
+ */
+static bool
+_queue_next_wakeup(bool set_callback_fn)
 {
 	int rc;
 	char **table;
 	int noRows, noCols;
 	char *zErrMsg;
+	nyx_error_t nyx_error;
 
-	time_t rtc_expiry = 0;
-	time_t timer_expiry = 0;
-	time_t now = rtc_wall_time(); // TODO wall clock? or RTC?
-
-	g_return_if_fail(timeout_db != NULL);
+	g_return_val_if_fail(timeout_db != NULL, false);
 
 	rc = sqlite3_get_table(timeout_db, "SELECT expiry FROM AlarmTimeout "
 	                       "WHERE wakeup=1 ORDER BY expiry LIMIT 1", &table, &noRows, &noCols, &zErrMsg);
@@ -533,30 +528,71 @@ _queue_next_timeout(bool set_callback_fn)
 		SLEEPDLOG_WARNING(MSGID_SELECT_EXPIRY_WITH_WAKEUP, 2, PMLOGKS(ERRTEXT, zErrMsg),
 		                  PMLOGKFV(ERRCODE, "%d", rc), "");
 		sqlite3_free(zErrMsg);
-		return;
+		return false;
 	}
 
 	if (!noRows)
 	{
+		sqlite3_free_table(table);
+
+		// reset RTC alarm
 		nyx_system_set_alarm(GetNyxSystemDevice(), 0, NULL, NULL);
 	}
 	else
 	{
-		rtc_expiry = atol(table[ noCols ]);
+		time_t rtctime = 0;
+		time_t expiry = atol(table[ noCols ]);
+		sqlite3_free_table(table);
 
-		if (set_callback_fn)
+		// we should adjust our expiry (reference clock based) to RTC clock
+		nyx_error = nyx_system_query_rtc_time(GetNyxSystemDevice(), &rtctime);
+		if (nyx_error != NYX_ERROR_NONE)
 		{
-			nyx_system_set_alarm(GetNyxSystemDevice(), to_rtc(rtc_expiry), _rtc_alarm_fired,
-			                     NULL);
+			SLEEPDLOG_WARNING(MSGID_SELECT_EXPIRY_WITH_WAKEUP, 1, PMLOGKFV("nyx_error", "%d", nyx_error),
+			                  "Failed to get RTC clocks while setting up wakeup alarm");
+			return false;
 		}
-		else
-		{
-			nyx_system_set_alarm(GetNyxSystemDevice(), to_rtc(rtc_expiry), NULL, NULL);
-		}
+		time_t rtc_expiry = expiry + (rtctime - reference_time());
 
+		// setup RTC alarm
+		nyx_error = nyx_system_set_alarm(GetNyxSystemDevice(), rtc_expiry,
+		                                 set_callback_fn ? _rtc_alarm_fired : NULL,
+		                                 NULL);
+		if (nyx_error != NYX_ERROR_NONE)
+		{
+			SLEEPDLOG_WARNING(MSGID_SELECT_EXPIRY_WITH_WAKEUP, 1, PMLOGKFV("nyx_error", "%d", nyx_error),
+			                  "Failed to setup RTC wakeup alarm");
+			return false;
+		}
 	}
 
-	sqlite3_free_table(table);
+	return true;
+}
+
+bool queue_next_wakeup()
+{ return _queue_next_wakeup(false); }
+
+/**
+* @brief Queues a timer for non-wakeup timeouts.
+*
+* The non-wakeup timeout timer is necessary so that
+* these timeouts do not wake the device when they fire.
+* Case 1: non-wakeup timeout expires when device is awake (trivial).
+* Case 2: non-wakeup timeout expires when device is asleep.
+*     On resume, we will check to see if any alarms are expired and fire them.
+*/
+static void
+_queue_next_timeout()
+{
+	int rc;
+	char **table;
+	int noRows, noCols;
+	char *zErrMsg;
+
+	time_t timer_expiry = 0;
+	time_t now = reference_time();
+
+	g_return_if_fail(timeout_db != NULL);
 
 	rc = sqlite3_get_table(timeout_db, "SELECT expiry FROM AlarmTimeout "
 	                       "ORDER BY expiry LIMIT 1", &table, &noRows, &noCols, &zErrMsg);
@@ -596,12 +632,9 @@ _queue_next_timeout(bool set_callback_fn)
 static void
 _update_timeouts(void)
 {
-	time_t delta =
-	    0;  // prevent compile error "may be used uninitialized" when optimization is cranked up
+	time_t delta = update_reference_time(NULL, NULL);
 
-	update_rtc(&delta);
-
-	if (delta)
+	if (delta != invalid_time && delta != 0)
 	{
 		_recalculate_timeouts(delta);
 		void update_alarms_delta(time_t delta);
@@ -609,7 +642,18 @@ _update_timeouts(void)
 	}
 
 	_expire_timeouts();
-	_queue_next_timeout(true);
+#ifdef ENABLE_UNMANAGED_SUSPEND
+	/* By some reason original code sets wakeup alarm for every next wakeup
+	 * event.
+	 * In normal situation we would need to setup wakeup alram only before
+	 * suspending.
+	 * But looks like this code expects that we can go to unexpected suspend
+	 * without resume signal notification (for that reason we may want to setup
+	 * RTC alarm callback).
+	 */
+	_queue_next_wakeup(true);
+#endif
+	_queue_next_timeout();
 }
 
 void _timeout_create(_AlarmTimeout *timeout,
@@ -1163,7 +1207,7 @@ _alarm_timeout_set(LSHandle *sh, LSMessage *message, void *ctx)
 			                "%d seconds enforced on actual handsets", delta, TIMEOUT_MINIMUM_HANDSET_SEC);
 		}
 
-		expiry = rtc_wall_time() + delta;
+		expiry = reference_time() + delta;
 	}
 	else
 	{
@@ -1481,17 +1525,18 @@ _alarms_timeout_init(void)
 		goto error;
 	}
 
-	retVal = update_rtc(NULL);
-
+	retVal = (update_reference_time(NULL, NULL) != invalid_time);
 	if (!retVal)
 	{
-		SLEEPDLOG_ERROR(MSGID_UPDATE_RTC_FAIL, 0, "could not get wall-rtc offset");
+		SLEEPDLOG_ERROR(MSGID_UPDATE_REFERENCE_FAIL, 0, "could not initialize reference clock");
 	}
 
+#ifndef WITHOUT_RTC_WATCHDOG
 	GTimerSource *timer_rtc_check = g_timer_source_new_seconds(5 * 60);
 	g_source_set_callback((GSource *)timer_rtc_check,
 	                      (GSourceFunc)_rtc_check, NULL, NULL);
 	g_source_attach((GSource *)timer_rtc_check, GetMainLoopContext());
+#endif
 
 	sTimerCheck = g_timer_source_new_seconds(60 * 60);
 	g_source_set_callback((GSource *)sTimerCheck,

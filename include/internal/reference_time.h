@@ -23,6 +23,11 @@
  *
  *  Interfece to some reference time source built to address issues caused by
  *  system time change.
+ *
+ *  Reference time by itself represents clock that ticks together with
+ *  system-time and periodically adjusted to match with system-time. This
+ *  approach allows to have full control over time adjustion process and fire
+ *  time-change events.
  */
 
 #ifndef __REFERENCE_TIME_H
@@ -32,31 +37,23 @@
 #include <time.h>
 
 /**
- * @brief Convert to rtc time.
- *
- * @param  t
- *
- * @retval
+ * System time unaffected by time change since last update_reference_time call
  */
-time_t to_rtc(time_t t);
+time_t reference_time(void);
 
 /**
- * @brief Last wall time.
+ * Adjust reference time to system-time and fire callback.
  *
- * @retval
- */
-time_t rtc_wall_time(void);
-
-/**
- * @brief Calculate the time difference between RTC time and wall time
- */
-bool wall_rtc_diff(time_t *ret_delta);
-
-/**
- * @brief Update the rtc and return the difference rtc changed by.
+ * @param callback is called when time adjustment is going to be applied for
+ *        reference time. If callback returns false - no adjustment is done and
+ *        probably during next call we'll be in same position. If NULL passed
+ *        as callback it will be ignored and adjustment will happen as if
+ *        callback returned true.
  *
- * @retval
+ * @param user_data passed to callback
+ *
+ * @retval reference adjustion value
  */
-time_t update_rtc(time_t *ret_delta);
+time_t update_reference_time(bool (*callback)(time_t delta, void *user_data), void *user_data);
 
 #endif

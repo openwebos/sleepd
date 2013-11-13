@@ -89,7 +89,7 @@
 #define MSGID_INDEX_CREATE_FAIL                   "INDEX_CREATE_FAIL"              //could not create index
 #define MSGID_CATEGORY_REG_FAIL                   "CATEGORY_REG_FAIL"              //could not register category
 #define MSGID_METHOD_REG_ERR                      "METHOD_REG_ERR"                 //could not register for suspend resume signal
-#define MSGID_UPDATE_RTC_FAIL                     "UPDATE_RTC_FAIL"                //could not get wall-rtc offset
+#define MSGID_UPDATE_REFERENCE_FAIL               "UPDATE_REFERENCE_FAIL"          //could not update reference clock
 #define MSGID_ALARM_TIMEOUT_INSERT                "ALARM_TIMEOUT_INSERT"           //Insert into AlarmTimeout failed
 #define MSGID_SELECT_ALL_FROM_TIMEOUT             "SELECT_ALL_FROM_TIMEOUT"        //timeout read failed
 

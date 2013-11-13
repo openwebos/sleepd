@@ -50,6 +50,7 @@
 #include "sysfs.h"
 #include "init.h"
 #include "timeout_alarm.h"
+#include "reference_time.h"
 #include "config.h"
 #include "sawmill_logger.h"
 #include "nyx/nyx_client.h"
@@ -331,7 +332,7 @@ IdleCheck(gpointer ctx)
 				{
 					g_free(app_id);
 					g_free(key);
-					int next_wake = expiry - rtc_wall_time();
+					int next_wake = expiry - reference_time();
 
 					if (next_wake >= 0 && next_wake <= gSleepConfig.wait_alarms_s)
 					{
@@ -768,7 +769,7 @@ StateSleep(void)
 
 		if (timeout_get_next_wakeup(&expiry, &app_id, &key))
 		{
-			SLEEPDLOG_DEBUG("waking in %ld seconds for %s", expiry - rtc_wall_time(), key);
+			SLEEPDLOG_DEBUG("waking in %ld seconds for %s", expiry - reference_time(), key);
 		}
 
 		g_free(app_id);
@@ -793,9 +794,16 @@ StateSleep(void)
 	{
 		if (MachineCanSleep())
 		{
-			// let the system sleep now.
-			_queue_next_timeout(false);
-			MachineSleep();
+			if (queue_next_wakeup())
+			{
+				// let the system sleep now.
+				MachineSleep();
+			}
+			else
+			{
+				SLEEPDLOG_DEBUG("We couldn't sleep because there can't setup wakup alarm");
+				nextState = kPowerStateAbortSuspend;
+			}
 		}
 		else
 		{
