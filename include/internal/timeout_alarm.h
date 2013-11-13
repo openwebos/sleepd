@@ -55,8 +55,6 @@ typedef struct _AlarmTimeoutNonConst
 
 time_t rtc_wall_time(void);
 
-void _free_timeout_fields(_AlarmTimeoutNonConst *timeout);
-
 void _timeout_create(_AlarmTimeout *timeout,
                      const char *app_id, const char *key,
                      const char *uri, const char *params,

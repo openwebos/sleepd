@@ -230,7 +230,7 @@ _print_timeout(const char *message, const char *app_id, const char *key,
 	                message, app_id, key, public_bus ? "public" : "private", expiry, buf);
 }
 
-void _update_timeouts(void);
+static void _update_timeouts(void);
 
 /**
 * @brief Called when a new alarm from the RTC is fired.
@@ -675,7 +675,7 @@ _queue_next_timeout(bool set_callback_fn)
 /**
 * @brief Trigger expired timeouts, and queue up the next one.
 */
-void
+static void
 _update_timeouts(void)
 {
 	time_t delta =
@@ -763,7 +763,7 @@ _timeout_set(_AlarmTimeout *timeout)
 	return true;
 }
 
-void
+static void
 _free_timeout_fields(_AlarmTimeoutNonConst *timeout)
 {
 	g_free(timeout->table_id);
