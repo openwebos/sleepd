@@ -84,7 +84,7 @@ typedef enum
 static LSPalmService *psh = NULL;
 static sqlite3 *timeout_db = NULL;
 static GTimerSource *sTimerCheck = NULL;
-static time_t invalid_time = (time_t)-1;
+static time_t invalid_time = (time_t) - 1;
 
 /*
    Database Schema.
@@ -546,21 +546,26 @@ _queue_next_wakeup(bool set_callback_fn)
 
 		// we should adjust our expiry (reference clock based) to RTC clock
 		nyx_error = nyx_system_query_rtc_time(GetNyxSystemDevice(), &rtctime);
+
 		if (nyx_error != NYX_ERROR_NONE)
 		{
-			SLEEPDLOG_WARNING(MSGID_SELECT_EXPIRY_WITH_WAKEUP, 1, PMLOGKFV("nyx_error", "%d", nyx_error),
+			SLEEPDLOG_WARNING(MSGID_SELECT_EXPIRY_WITH_WAKEUP, 1, PMLOGKFV("nyx_error",
+			                  "%d", nyx_error),
 			                  "Failed to get RTC clocks while setting up wakeup alarm");
 			return false;
 		}
+
 		time_t rtc_expiry = expiry + (rtctime - reference_time());
 
 		// setup RTC alarm
 		nyx_error = nyx_system_set_alarm(GetNyxSystemDevice(), rtc_expiry,
 		                                 set_callback_fn ? _rtc_alarm_fired : NULL,
 		                                 NULL);
+
 		if (nyx_error != NYX_ERROR_NONE)
 		{
-			SLEEPDLOG_WARNING(MSGID_SELECT_EXPIRY_WITH_WAKEUP, 1, PMLOGKFV("nyx_error", "%d", nyx_error),
+			SLEEPDLOG_WARNING(MSGID_SELECT_EXPIRY_WITH_WAKEUP, 1, PMLOGKFV("nyx_error",
+			                  "%d", nyx_error),
 			                  "Failed to setup RTC wakeup alarm");
 			return false;
 		}
@@ -570,7 +575,9 @@ _queue_next_wakeup(bool set_callback_fn)
 }
 
 bool queue_next_wakeup()
-{ return _queue_next_wakeup(false); }
+{
+	return _queue_next_wakeup(false);
+}
 
 /**
 * @brief Queues a timer for non-wakeup timeouts.
@@ -915,7 +922,7 @@ _rtc_check(gpointer data)
 	{
 		sNumTimes++;
 		SLEEPDLOG_WARNING(MSGID_RTC_ERR, 2, PMLOGKFV(NYX_QUERY_TIME, "%ld", this_time),
-			              PMLOGKFV("RTC_TIME","%ld",sNumTimes),
+		                  PMLOGKFV("RTC_TIME", "%ld", sNumTimes),
 		                  "RTC appears not to be ticking,showing same RTC time");
 	}
 	else
@@ -1473,7 +1480,8 @@ _alarms_timeout_init(void)
 
 	if (!retVal)
 	{
-		SLEEPDLOG_ERROR(MSGID_DB_OPEN_ERR, 1, PMLOGKS("DBName",timeout_db_name),"Failed to open database");
+		SLEEPDLOG_ERROR(MSGID_DB_OPEN_ERR, 1, PMLOGKS("DBName", timeout_db_name),
+		                "Failed to open database");
 		goto error;
 	}
 
@@ -1526,9 +1534,11 @@ _alarms_timeout_init(void)
 	}
 
 	retVal = (update_reference_time(NULL, NULL) != invalid_time);
+
 	if (!retVal)
 	{
-		SLEEPDLOG_ERROR(MSGID_UPDATE_REFERENCE_FAIL, 0, "could not initialize reference clock");
+		SLEEPDLOG_ERROR(MSGID_UPDATE_REFERENCE_FAIL, 0,
+		                "could not initialize reference clock");
 	}
 
 #ifndef WITHOUT_RTC_WATCHDOG

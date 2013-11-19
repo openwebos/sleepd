@@ -27,7 +27,7 @@
 #include "reference_time.h"
 
 static time_t clock_to_reference = 0;
-static const time_t invalid_time = ((time_t)-1);
+static const time_t invalid_time = ((time_t) - 1);
 
 /**
  * Get current reference time value (seconds since epoch)
@@ -40,7 +40,11 @@ static bool reference_gettime(time_t *ret_time)
 	 * adjtimex (slewing) for adjusting over half of second
 	 */
 	struct timespec ts;
-	if (!clock_gettime(CLOCK_BOOTTIME, &ts)) return false;
+
+	if (!clock_gettime(CLOCK_BOOTTIME, &ts))
+	{
+		return false;
+	}
 
 	ts.tv_sec += clock_to_reference;
 	*ret_time = ts.tv_sec;
@@ -51,19 +55,30 @@ time_t reference_time(void)
 {
 	time_t reftime;
 	return reference_gettime(&reftime) ? reftime
-	                                   : time(NULL);
+	       : time(NULL);
 }
 
-time_t update_reference_time(bool (*callback)(time_t delta, void *user_data), void *user_data)
+time_t update_reference_time(bool (*callback)(time_t delta, void *user_data),
+                             void *user_data)
 {
 	time_t systime, reftime, delta;
 
-	if (time(&systime) == invalid_time) return invalid_time;
-	if (!reference_gettime(&reftime)) return invalid_time;
+	if (time(&systime) == invalid_time)
+	{
+		return invalid_time;
+	}
+
+	if (!reference_gettime(&reftime))
+	{
+		return invalid_time;
+	}
 
 	delta = systime - reftime;
 
-	if (!delta) return 0; /* no need to adjust */
+	if (!delta)
+	{
+		return 0;    /* no need to adjust */
+	}
 
 	if (callback == NULL || callback(delta, user_data))
 	{

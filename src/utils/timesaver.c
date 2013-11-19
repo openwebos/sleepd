@@ -70,7 +70,8 @@ timesaver_save()
 
 		if (file < 0)
 		{
-			SLEEPDLOG_WARNING(MSGID_TIME_NOT_SAVED, 1, PMLOGKS("FileName",time_db_tmp), "Could not save time");
+			SLEEPDLOG_WARNING(MSGID_TIME_NOT_SAVED, 1, PMLOGKS("FileName", time_db_tmp),
+			                  "Could not save time");
 		}
 		else
 		{
@@ -85,17 +86,20 @@ timesaver_save()
 			snprintf(timestamp, sizeof(timestamp), "%ld", tp.tv_sec);
 
 			for (char *buf = timestamp, *end = timestamp + strlen(timestamp);
-			     buf < end;)
+			        buf < end;)
 			{
 				size_t written = write(file, buf, end - buf);
+
 				if (written <= 0)
 				{
-					SLEEPDLOG_WARNING(MSGID_TIME_NOT_SAVED, 1, PMLOGKS("FileName",time_db_tmp), "Could not save time");
+					SLEEPDLOG_WARNING(MSGID_TIME_NOT_SAVED, 1, PMLOGKS("FileName", time_db_tmp),
+					                  "Could not save time");
 
 					// failed to write to temp file
 					unlink(time_db_tmp);
 					return;
 				}
+
 				buf += written;
 			}
 

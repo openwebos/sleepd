@@ -54,6 +54,7 @@ time_t reference_time(void);
  *
  * @retval reference adjustion value
  */
-time_t update_reference_time(bool (*callback)(time_t delta, void *user_data), void *user_data);
+time_t update_reference_time(bool (*callback)(time_t delta, void *user_data),
+                             void *user_data);
 
 #endif
