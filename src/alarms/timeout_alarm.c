@@ -221,7 +221,7 @@ _timeout_fire(_AlarmTimeout *timeout)
 	g_return_if_fail(timeout != NULL);
 	GString *payload = g_string_new("");
 
-	SLEEPDLOG_DEBUG("_timeout_fire : %s (%s,%s => %s)", timeout->app_id,
+	SLEEPDLOG_DEBUG("_timeout_fire : %s (%s => %s)", timeout->app_id,
 	                timeout->key, timeout->uri);
 
 	LSHandle *sh = NULL;
@@ -1184,7 +1184,7 @@ _alarm_timeout_set(LSHandle *sh, LSMessage *message, void *ctx)
 	else if (in)
 	{
 
-		SLEEPDLOG_DEBUG("%s (%s,%s,%s) in %s", app_id, key, wakeup ? "wakeup" : "_",
+		SLEEPDLOG_DEBUG("%s (%s,%s) in %s", app_id, key, wakeup ? "wakeup" : "_",
 		                in);
 
 		timeout_type = AlarmTimeoutRelative;
