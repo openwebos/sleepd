@@ -97,6 +97,7 @@ timesaver_save()
 
 					// failed to write to temp file
 					unlink(time_db_tmp);
+					close(file);
 					return;
 				}
 

@@ -65,6 +65,8 @@
 #define MSGID_SQLITE_PREPARE_ERR                  "SQLITE_PREPARE_ERR"             //sqlite3 prepare error
 #define MSGID_SQLITE_STEP_ERR                     "SQLITE_STEP_ERR"                //sqlite3 step error
 #define MSGID_DB_INTEGRITY_CHK_ERR                "DB_INTEGRITY_CHK_ERR"           //db integrity check error
+#define MSGID_JOURNAL_REMOVE_ERR                  "JOURNAL_REMOVE_ERR"             //failed to remove db journal
+#define MSGID_DB_REMOVE_ERR                       "DB_REMOVE_ERR"                  //failed to remove db file
 #define MSGID_INTEGRITY_CHK_FAIL                  "INTEGRITY_CHK_FAIL"             //db integrity check failed
 #define MSGID_SET_SYNCOFF_ERR                     "SET_SYNCOFF_ERR"                //Failed to set syncoff on provided path
 

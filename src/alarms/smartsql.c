@@ -196,14 +196,19 @@ smart_sql_open(const char *path, sqlite3 **ret_db)
 
 		if (journal != NULL)
 		{
-			remove(journal);
+			if (remove(journal) != 0)
+			{
+				SLEEPDLOG_WARNING(MSGID_JOURNAL_REMOVE_ERR, 1, PMLOGKS("FileName", journal),
+				                "Failed to remove corrupted db journal");
+			}
+
+			g_free(journal);
 		}
 
-		remove(path);
-
-		if (journal != NULL)
+		if (remove(path) != 0)
 		{
-			g_free(journal);
+			SLEEPDLOG_WARNING(MSGID_DB_REMOVE_ERR, 1, PMLOGKS("FileName", path),
+			                    "Failed to remove corrupted db file");
 		}
 
 		db = _open(path);
