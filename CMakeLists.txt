@@ -96,7 +96,9 @@ if(UNMANAGED_SUSPEND)
     add_definitions(-DENABLE_UNMANAGED_SUSPEND)
 endif()
 
-if(DEFINED RTC_WATCHDOG AND NOT RTC_WATCHDOG)
+set(RTC_WATCHDOG FALSE CACHE BOOL "Set to TRUE to support RTC watchdog")
+
+if(NOT RTC_WATCHDOG)
     add_definitions(-DWITHOUT_RTC_WATCHDOG)
 endif()
 
