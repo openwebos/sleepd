@@ -41,7 +41,7 @@ static bool reference_gettime(time_t *ret_time)
 	 */
 	struct timespec ts;
 
-	if (!clock_gettime(CLOCK_BOOTTIME, &ts))
+	if (clock_gettime(CLOCK_BOOTTIME, &ts) == -1)
 	{
 		return false;
 	}
