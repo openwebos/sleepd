@@ -579,6 +579,14 @@ bool queue_next_wakeup()
 	return _queue_next_wakeup(false);
 }
 
+/* If next wakeup time exceeds 7 days its due to incorrect system time,
+   so set the minimum wakeup interval to 10 sec after which sleepd can
+   again check if the next wakeup time is sane (less than 7 days)
+   and set it accordingly */
+
+#define MAX_WAKEUP_SECS	7*24*60*60
+#define MIN_WAKEUP_SECS	10
+
 /**
 * @brief Queues a timer for non-wakeup timeouts.
 *
@@ -625,6 +633,10 @@ _queue_next_timeout()
 		if (wakeInSeconds < 0)
 		{
 			wakeInSeconds = 0;
+		}
+		else if(wakeInSeconds > MAX_WAKEUP_SECS)
+		{
+			wakeInSeconds = MIN_WAKEUP_SECS;
 		}
 
 		g_timer_source_set_interval_seconds(sTimerCheck, wakeInSeconds, true);
