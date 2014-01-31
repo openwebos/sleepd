@@ -1,6 +1,6 @@
 /* @@@LICENSE
 *
-*      Copyright (c) 2011-2013 LG Electronics, Inc.
+*      Copyright (c) 2011-2014 LG Electronics, Inc.
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -1549,8 +1549,7 @@ _alarms_timeout_init(void)
 
 	if (!retVal)
 	{
-		SLEEPDLOG_ERROR(MSGID_UPDATE_REFERENCE_FAIL, 0,
-		                "could not initialize reference clock");
+		SLEEPDLOG_DEBUG("could not initialize reference clock");
 	}
 
 #ifndef WITHOUT_RTC_WATCHDOG

@@ -1,6 +1,6 @@
 /* @@@LICENSE
 *
-*      Copyright (c) 2011-2013 LG Electronics, Inc.
+*      Copyright (c) 2011-2014 LG Electronics, Inc.
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -936,8 +936,7 @@ SuspendInit(void)
 
 	if (ret != NYX_ERROR_NONE)
 	{
-		SLEEPDLOG_ERROR(MSGID_NYX_DEV_OPEN_FAIL, 0,
-		                "Unable to open the nyx device led controller");
+		SLEEPDLOG_DEBUG("Unable to open the nyx device led controller");
 	}
 
 	return 0;
